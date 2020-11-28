@@ -1,0 +1,10 @@
+version: '3.7'
+services:
+    compile: &BASE
+        build: .
+        volumes:
+            - .:/package
+
+    tests:
+        <<: *BASE
+        command: pipenv run pytest -v tests
