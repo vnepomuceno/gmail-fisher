@@ -1,0 +1,7 @@
+language: python
+
+services:
+  - docker
+
+script:
+  - docker-compose build tests && docker-compose run tests
