@@ -1,5 +1,7 @@
 # Gmail Fisher
 
+![Build Status](https://travis-ci.com/Vnepomuceno/gmail-fisher.svg?branch=master)
+
 Automation scripts for interacting with Gmail API 🎣
 
 ## Save Attachments

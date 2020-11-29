@@ -1,6 +1,7 @@
 .idea
 .DS_Store
 token.pickle
-credentials.json
-output
-properties.yml
+**/credentials.json
+**/output
+**/properties.yml
+**/__pycache__
