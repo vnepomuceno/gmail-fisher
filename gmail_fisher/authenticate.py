@@ -22,7 +22,7 @@ def authenticate_gmail_api() -> Credentials:
             credentials.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                'gmail_fisher/authentication/credentials.json', SCOPES)
+                'gmail_fisher/credentials.json', SCOPES)
             credentials = flow.run_local_server(port=0)
         # Save the credentials for the next run
         with open('token.pickle', 'wb') as token:
