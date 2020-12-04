@@ -1,5 +1,5 @@
 import unittest
-from gmail_fisher.save_attachments.save_attachments import get_payslip_filename
+from gmail_fisher.save_attachments import get_payslip_filename
 
 
 class TestSaveAttachments(unittest.TestCase):

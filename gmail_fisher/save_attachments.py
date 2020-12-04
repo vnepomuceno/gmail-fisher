@@ -1,18 +1,12 @@
 from __future__ import print_function
 
+print('__file__={0:<35} | __name__={1:<20} | __package__={2:<20}'.format(__file__, __name__, str(__package__)))
 import base64
-import os.path
-import pickle
 import re
 import sys
-
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
+from .authenticate import authenticate_gmail_api
 from googleapiclient.discovery import build
 
-# If modifying these scopes, delete the file token.pickle.
-SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 DOWNLOAD_PDF_FLAG = '--download-pdf'
 
 
@@ -27,6 +21,10 @@ def gmail_save_attachments(argv):
     message_results = service.users().messages() \
         .list(userId='me', q=f"from:{args['sender_emails']} {args['keywords']}").execute()
 
+    if message_results['resultSizeEstimate'] == 0:
+        print("No messages found for provided arguments. Goodbye")
+        sys.exit(0)
+
     for message in message_results['messages']:
         message = service.users().messages() \
             .get(id=message['id'], userId="me").execute()
@@ -38,28 +36,6 @@ def gmail_save_attachments(argv):
             attachment_base64 = service.users().messages().attachments().get(userId='me', messageId=message['id'],
                                                                              id=attachment_id).execute()['data']
             save_base64_pdf(attachment_base64, get_payslip_filename(message['snippet']), message['id'])
-
-
-def authenticate_gmail_api() -> Credentials:
-    credentials = None
-    # The file token.pickle stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            credentials = pickle.load(token)
-    # If there are no (valid) credentials available, let the user log in.
-    if not credentials or not credentials.valid:
-        if credentials and credentials.expired and credentials.refresh_token:
-            credentials.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'gmail_fisher/save_attachments/credentials.json', SCOPES)
-            credentials = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(credentials, token)
-    return credentials
 
 
 def get_payslip_filename(subject: str) -> str:
@@ -79,8 +55,8 @@ def save_base64_pdf(base64_string: str, file_name: str, message_id: str):
 
 def get_arguments(argv) -> dict:
     try:
-        sender_emails = argv[1].strip('\'')
-        keywords = argv[2].strip('\'')
+        sender_emails = argv[2].strip('\'')
+        keywords = argv[3].strip('\'')
         if argv[3] == DOWNLOAD_PDF_FLAG:
             download = bool(1)
         else:
@@ -90,7 +66,3 @@ def get_arguments(argv) -> dict:
 
     print(f"Download attachments flag {DOWNLOAD_PDF_FLAG}={download} 💾")
     return dict(sender_emails=sender_emails, keywords=keywords, download=download)
-
-
-if __name__ == '__main__':
-    gmail_save_attachments(sys.argv)
