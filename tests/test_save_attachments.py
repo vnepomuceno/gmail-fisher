@@ -1,5 +1,5 @@
 import unittest
-from gmail_fisher.save_attachments import get_payslip_filename
+import gmail_fisher.save_attachments
 
 
 class TestSaveAttachments(unittest.TestCase):
@@ -9,7 +9,7 @@ class TestSaveAttachments(unittest.TestCase):
     def test_get_payslip_filename(self):
         subject = 'Please note that the Payslip for the income earned in 8-2020 is attached.'
         expected = 'PaySlip_2020-8.pdf'
-        filename = get_payslip_filename(subject)
+        filename = gmail_fisher.save_attachments.get_payslip_filename(subject)
 
         assert filename == expected
 
