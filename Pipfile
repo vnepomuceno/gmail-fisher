@@ -8,7 +8,8 @@ pytest = "==5.0.1"
 google-auth = "==1.23.0"
 google-api-python-client = "==1.12.8"
 google-auth-oauthlib = "==0.4.2"
-google = "*"
+google = "==3.0.0"
+matplotlib = "==3.3.3"
 
 [dev-packages]
 
