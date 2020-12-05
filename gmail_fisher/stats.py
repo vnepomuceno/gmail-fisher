@@ -1,41 +1,17 @@
-print('__file__={0:<35} | __name__={1:<20} | __package__={2:<20}'.format(__file__, __name__, str(__package__)))
-import datetime
-import re
 import sys
-from dataclasses import dataclass
 from typing import List
 
 import matplotlib.pyplot as plt
-from .authenticate import authenticate_gmail_api
-from googleapiclient.discovery import build
 
-
-@dataclass
-class GmailMessage:
-    id: str
-    subject: str
-    user_id: str
-    date: datetime
-
-    def get_total_payed(self) -> float:
-        try:
-            match = re.search("[€][1-9]?[0-9].[0-9][0-9]", self.subject).group(0)
-        except AttributeError:
-            print(f"⚠️  Could not match total payed (e.g. €12.30) for message id='{self.id}'")
-            return 0
-        return float(match.strip('€'))
-
-    def ignore_message(self) -> bool:
-        if 'Refund' in self.subject or self.get_total_payed() == 0:
-            return True
-        else:
-            return False
+from .gmail_gateway import authenticate_gmail_api
+from .gmail_gateway import get_gmail_filtered_messages
+from .gmail_gateway import GmailMessage
 
 
 def plot_uber_eats_expenses(argv):
     args = get_arguments(argv)
     credentials = authenticate_gmail_api()
-    gmail_messages = get_gmail_filtered_messages(credentials, args)
+    gmail_messages = get_gmail_filtered_messages(credentials, args['sender_emails'], args['keywords'], 1000)
     stats = get_uber_eats_stats(gmail_messages)
     draw_bar_plot(stats['timeline_totals'], stats['total_payed'])
 
@@ -49,7 +25,7 @@ def get_uber_eats_stats(gmail_messages: List[GmailMessage]) -> dict:
             print(f"⚠️  Message ignored with subject='{message.subject}'\n---------------")
             continue
 
-        total = message.get_total_payed()
+        total = message.get_total_payed_from_subject()
         date = message.date
         date_label = date.strftime('%Y-%m')
 
@@ -76,55 +52,6 @@ def get_uber_eats_stats(gmail_messages: List[GmailMessage]) -> dict:
     print(f"💸  TOTAL PAYED EVER: {round(total_payed, 2)}€\n\n====================")
 
     return dict(timeline_payed=timeline_payed, timeline_totals=timeline_totals, total_payed=round(total_payed, 2))
-
-
-def get_gmail_filtered_messages(credentials, args):
-    service = build('gmail', 'v1', credentials=credentials)
-
-    list_message_results = service.users().messages().list(
-        userId='me',
-        q=f"from:{args['sender_emails']} {args['keywords']}",
-        maxResults=1000
-    ).execute()
-
-    if list_message_results['resultSizeEstimate'] == 0:
-        print('No messages found.')
-        sys.exit(0)
-
-    message_list = list()
-    for message in list_message_results['messages']:
-        get_message_result = service.users().messages().get(id=message['id'], userId="me").execute()
-        message = GmailMessage(
-            id=message['id'],
-            subject=get_message_result['snippet'],
-            user_id='me',
-            date=get_date(
-                next(item for item in get_message_result['payload']['headers'] if item["name"] == "Date")['value']
-            )
-        )
-        print(f"Fetched message from date='{message.date.strftime('%Y-%m-%d')}', "
-              f"subject='{message.subject[0:120]} ...'")
-        message_list.append(message)
-
-    return message_list
-
-
-def get_date(date_str) -> datetime:
-    """
-    Receives a string date in the format 'Sun, 29 Nov 2020 21:32:07 +0000 (UTC)',
-    and returns a datetime with precision up to the day.
-    """
-    date_arr = date_str.strip(' +0000 (UTC)') \
-        .split(', ')[1] \
-        .split(' ')
-    date_str = f"{date_arr[0]} {date_arr[1]} {date_arr[2]}"
-    date = datetime.datetime.now()
-    try:
-        date = datetime.datetime.strptime(date_str, '%d %b %Y')
-    except ValueError as ve:
-        print(f"⚠️  Date could not be parsed '{date_str}'. Raised error {ve}")
-
-    return date
 
 
 def get_arguments(argv) -> dict:

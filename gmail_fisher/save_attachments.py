@@ -1,11 +1,12 @@
 from __future__ import print_function
 
-print('__file__={0:<35} | __name__={1:<20} | __package__={2:<20}'.format(__file__, __name__, str(__package__)))
 import base64
 import re
 import sys
-from .authenticate import authenticate_gmail_api
+
 from googleapiclient.discovery import build
+
+from .gmail_gateway import authenticate_gmail_api
 
 DOWNLOAD_PDF_FLAG = '--download-pdf'
 
@@ -57,7 +58,7 @@ def get_arguments(argv) -> dict:
     try:
         sender_emails = argv[2].strip('\'')
         keywords = argv[3].strip('\'')
-        if argv[3] == DOWNLOAD_PDF_FLAG:
+        if argv[4] == DOWNLOAD_PDF_FLAG:
             download = bool(1)
         else:
             download = bool(0)
