@@ -3,15 +3,15 @@ from typing import List
 
 import matplotlib.pyplot as plt
 
-from .gmail_gateway import authenticate_gmail_api
-from .gmail_gateway import get_gmail_filtered_messages
+from .gmail_gateway import authenticate
+from .gmail_gateway import get_filtered_messages
 from .gmail_gateway import GmailMessage
 
 
 def plot_uber_eats_expenses(argv):
     args = get_arguments(argv)
-    credentials = authenticate_gmail_api()
-    gmail_messages = get_gmail_filtered_messages(credentials, args['sender_emails'], args['keywords'], 1000)
+    credentials = authenticate()
+    gmail_messages = get_filtered_messages(credentials, args['sender_emails'], args['keywords'], 1000, False)
     stats = get_uber_eats_stats(gmail_messages)
     draw_bar_plot(stats['timeline_totals'], stats['total_payed'])
 
@@ -26,8 +26,7 @@ def get_uber_eats_stats(gmail_messages: List[GmailMessage]) -> dict:
             continue
 
         total = message.get_total_payed_from_subject()
-        date = message.date
-        date_label = date.strftime('%Y-%m')
+        date_label = message.get_date_as_datetime().strftime('%Y-%m')
 
         if timeline_payed.keys().__contains__(date_label):
             total_list = timeline_payed[date_label]
@@ -36,7 +35,7 @@ def get_uber_eats_stats(gmail_messages: List[GmailMessage]) -> dict:
         else:
             timeline_payed.update({date_label: [total]})
 
-        print(f"✅  Total payed is €{total} in {date}")
+        print(f"✅  Total payed is €{total} in {date_label}")
         print("---------------")
 
     total_payed = 0

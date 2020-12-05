@@ -1,42 +1,27 @@
 from __future__ import print_function
 
 import base64
+import os
 import re
-import sys
 
-from googleapiclient.discovery import build
-
-from .gmail_gateway import authenticate_gmail_api
+from .gmail_gateway import authenticate
+from .gmail_gateway import get_filtered_messages
+from .gmail_gateway import get_message_attachment
 
 DOWNLOAD_PDF_FLAG = '--download-pdf'
+OUTPUT_DIRECTORY = 'gmail_fisher/output/'
 
 
 def gmail_save_attachments(argv):
-    """Shows basic usage of the Gmail API.
-    Lists the user's Gmail labels.
-    """
     args = get_arguments(argv)
-    credentials = authenticate_gmail_api()
+    credentials = authenticate()
+    messages = get_filtered_messages(credentials, args['sender_emails'], args['keywords'], 1000, True)
 
-    service = build('gmail', 'v1', credentials=credentials)
-    message_results = service.users().messages() \
-        .list(userId='me', q=f"from:{args['sender_emails']} {args['keywords']}").execute()
-
-    if message_results['resultSizeEstimate'] == 0:
-        print("No messages found for provided arguments. Goodbye")
-        sys.exit(0)
-
-    for message in message_results['messages']:
-        message = service.users().messages() \
-            .get(id=message['id'], userId="me").execute()
-        print(f"[ID:{message['id']}] --> Subject: {message['snippet']}")
-
+    for message in messages:
         if args['download']:
-            attachment_id = service.users().messages() \
-                .get(id=message['id'], userId="me").execute()['payload']['parts'][1]['body']['attachmentId']
-            attachment_base64 = service.users().messages().attachments().get(userId='me', messageId=message['id'],
-                                                                             id=attachment_id).execute()['data']
-            save_base64_pdf(attachment_base64, get_payslip_filename(message['snippet']), message['id'])
+            for attachment in message.attachments:
+                base64_content = get_message_attachment(credentials, message.id, attachment.id)
+                save_base64_pdf(base64_content, get_payslip_filename(message.subject), message.id)
 
 
 def get_payslip_filename(subject: str) -> str:
@@ -47,7 +32,10 @@ def get_payslip_filename(subject: str) -> str:
 
 def save_base64_pdf(base64_string: str, file_name: str, message_id: str):
     file_data = base64.urlsafe_b64decode(base64_string.encode('UTF-8'))
-    file_handle = open(f"output/{file_name}", 'wb')
+
+    if not os.path.isdir(OUTPUT_DIRECTORY):
+        os.mkdir(OUTPUT_DIRECTORY)
+    file_handle = open(f"{OUTPUT_DIRECTORY}{file_name}", 'wb')
     file_handle.write(file_data)
     file_handle.close()
     print(f"[ID:{message_id}] --> Successfully saved attachment '{file_name}' ✅")
