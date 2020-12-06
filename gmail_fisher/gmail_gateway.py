@@ -106,7 +106,7 @@ def get_filtered_messages(credentials, sender_emails, keywords, max_results, get
         get_message_result = service.users().messages().get(id=message['id'], userId="me").execute()
 
         attachment_list = list()
-        if get_attachments:
+        if get_attachments and get_message_result['payload'].keys().__contains__('parts'):
             for part in get_message_result['payload']['parts']:
                 if part['mimeType'] in ['application/pdf', 'application/octet-stream']:
                     attachment = MessageAttachment(

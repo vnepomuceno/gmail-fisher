@@ -9,13 +9,31 @@ class TestSaveAttachments(unittest.TestCase):
         self.assertEqual(True, True)
 
     def test_get_arguments_without_download(self):
-        expected = dict(sender_emails='payroll.pt@my-company.com', keywords='payslip', download=False)
-        args = get_arguments(['run.py', 'save_attachments', 'payroll.pt@my-company.com', 'payslip'])
+        expected = dict(
+            sender_emails='payroll.pt@my-company.com',
+            keywords='payslip', download=False
+        )
+        args = get_arguments([
+            'run.py',
+            'save_attachments',
+            'payroll.pt@my-company.com',
+            'payslip'
+        ])
         assert args == expected
 
     def test_get_arguments_with_download(self):
-        expected = dict(sender_emails='payroll.pt@my-company.com', keywords='payslip', download=True)
-        args = get_arguments(['run.py', 'save_attachments', 'payroll.pt@my-company.com', 'payslip', '--download-pdf'])
+        expected = dict(
+            sender_emails='payroll.pt@my-company.com',
+            keywords='payslip',
+            download=True
+        )
+        args = get_arguments([
+            'run.py',
+            'save_attachments',
+            'payroll.pt@my-company.com',
+            'payslip',
+            '--download-pdf'
+        ])
         assert args == expected
 
     def test_get_payslip_filename(self):

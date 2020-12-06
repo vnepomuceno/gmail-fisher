@@ -1,11 +1,12 @@
+import collections
 import sys
 from typing import List
 
 import matplotlib.pyplot as plt
 
+from .gmail_gateway import GmailMessage
 from .gmail_gateway import authenticate
 from .gmail_gateway import get_filtered_messages
-from .gmail_gateway import GmailMessage
 
 
 def plot_uber_eats_expenses(argv):
@@ -13,7 +14,8 @@ def plot_uber_eats_expenses(argv):
     credentials = authenticate()
     gmail_messages = get_filtered_messages(credentials, args['sender_emails'], args['keywords'], 1000, False)
     stats = get_uber_eats_stats(gmail_messages)
-    draw_bar_plot(stats['timeline_totals'], stats['total_payed'])
+    sorted_timeline_totals = get_sorted_dict(stats['timeline_totals'])
+    draw_bar_plot(sorted_timeline_totals, stats['total_payed'])
 
 
 def get_uber_eats_stats(gmail_messages: List[GmailMessage]) -> dict:
@@ -53,6 +55,14 @@ def get_uber_eats_stats(gmail_messages: List[GmailMessage]) -> dict:
     return dict(timeline_payed=timeline_payed, timeline_totals=timeline_totals, total_payed=round(total_payed, 2))
 
 
+def get_sorted_dict(dictionary: dict) -> dict:
+    sorted_dict = collections.OrderedDict()
+    for key in sorted(dictionary.keys()):
+        sorted_dict.update({key: dictionary[key]})
+
+    return sorted_dict
+
+
 def get_arguments(argv) -> dict:
     """
     Receives sys.argv as argument and returns a dictionary of `sender_emails` and `keywords`,
@@ -64,7 +74,7 @@ def get_arguments(argv) -> dict:
         print(f"Stats script with sender_emails='{sender_emails}' and keywords='{keywords}' 📈")
         return dict(sender_emails=sender_emails, keywords=keywords)
     except IndexError:
-        print(f"❌  Could not parse arguments $1=sender_emails, $2=keywords")
+        print('❌  Could not parse arguments $1=sender_emails, $2=keywords')
         sys.exit(1)
 
 
@@ -81,5 +91,5 @@ def draw_bar_plot(months_totals: dict, total_payed: float):
     plt.bar(months_totals.keys(), months_totals.values())
     plt.title(f"UberEats Total Spent: {total_payed}€")
     plt.ylabel('Euros €')
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=60)
     plt.show()
