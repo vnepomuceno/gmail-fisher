@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from .gmail_gateway import GmailMessage
 from .gmail_gateway import authenticate
 from .gmail_gateway import get_filtered_messages
+from .log import info
 
 
 def plot_uber_eats_expenses(argv):
@@ -21,7 +22,7 @@ def plot_uber_eats_expenses(argv):
 def get_uber_eats_stats(gmail_messages: List[GmailMessage]) -> dict:
     timeline_payed = dict()
     for message in gmail_messages:
-        print(f"Processing id={message.id}, subject='{message.subject}'")
+        info('Processing message', {'id': message.id, 'subject': message.subject})
 
         if message.ignore_message():
             print(f"⚠️  Message ignored with subject='{message.subject}'\n---------------")

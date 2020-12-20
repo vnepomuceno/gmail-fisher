@@ -7,6 +7,7 @@ import re
 from .gmail_gateway import authenticate
 from .gmail_gateway import get_filtered_messages
 from .gmail_gateway import get_message_attachment
+from .log import success
 
 DOWNLOAD_PDF_FLAG = '--download-pdf'
 OUTPUT_DIRECTORY = 'gmail_fisher/output/'
@@ -38,7 +39,7 @@ def save_base64_pdf(base64_string: str, file_name: str, message_id: str):
     file_handle = open(f"{OUTPUT_DIRECTORY}{file_name}", 'wb')
     file_handle.write(file_data)
     file_handle.close()
-    print(f"[ID:{message_id}] --> Successfully saved attachment '{file_name}' ✅")
+    success('Successfully saved attachment', {'filename': file_name, 'message_id': message_id})
     print("----------------------------------------")
 
 

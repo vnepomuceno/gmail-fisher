@@ -10,7 +10,7 @@ COPY ./pyproject.toml ${VIRTUAL_ENV}/
 COPY ./poetry.lock ${VIRTUAL_ENV}/
 
 # Python commands run inside the virtual environment
-RUN python -m pip install \
+RUN python -m pip install --upgrade pip \
         parse \
         realpython-reader \
         poetry

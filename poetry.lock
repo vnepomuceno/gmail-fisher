@@ -79,6 +79,17 @@ python-versions = "*"
 six = "*"
 
 [[package]]
+name = "emoji"
+version = "1.1.0"
+description = "Emoji for Python"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.extras]
+dev = ["pytest", "coverage", "coveralls"]
+
+[[package]]
 name = "google"
 version = "3.0.0"
 description = "Python bindings to the Google search engine."
@@ -463,7 +474,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "0d8f0c5fcdba896916d88818768050c628d8e81e3761eed72251b1afc5f80aa6"
+content-hash = "8c74ae6488cfdea807a4231f7b8c66b501b66410fccbbfb5a92924493f1c7781"
 
 [metadata.files]
 atomicwrites = [
@@ -498,6 +509,10 @@ colorama = [
 cycler = [
     {file = "cycler-0.10.0-py2.py3-none-any.whl", hash = "sha256:1d8a5ae1ff6c5cf9b93e8811e581232ad8920aeec647c37316ceac982b08cb2d"},
     {file = "cycler-0.10.0.tar.gz", hash = "sha256:cd7b2d1018258d7247a71425e9f26463dfb444d411c39569972f4ce586b0c9d8"},
+]
+emoji = [
+    {file = "emoji-1.1.0-py3-none-any.whl", hash = "sha256:153fbf06eb5a111ca2b0c04f6f14ec3be434946a302f7892bf4c30446e050381"},
+    {file = "emoji-1.1.0.tar.gz", hash = "sha256:87c934907deb25e9621b0c48cac2051ad932636ad5946c4de6ba0f5f45a61fcd"},
 ]
 google = [
     {file = "google-3.0.0-py2.py3-none-any.whl", hash = "sha256:889cf695f84e4ae2c55fbc0cfdaf4c1e729417fa52ab1db0485202ba173e4935"},
