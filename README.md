@@ -1,6 +1,6 @@
 # Gmail Fisher
 
-![Build Status](https://api.travis-ci.com/Vnepomuceno/py-gmail-fisher.svg?branch=master)
+![Build Status](https://api.travis-ci.com/Vnepomuceno/gmail-fisher.svg?branch=master)
 
 Automation scripts for interacting with Gmail API 🎣
 
