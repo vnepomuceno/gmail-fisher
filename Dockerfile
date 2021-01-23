@@ -6,13 +6,14 @@ RUN python -m venv $VIRTUAL_ENV
 ENV PATH "$VIRTUAL_ENV/bin:$PATH"
 
 WORKDIR ${VIRTUAL_ENV}
-COPY ./Pipfile* ${VIRTUAL_ENV}/
+COPY ./pyproject.toml ${VIRTUAL_ENV}/
+COPY ./poetry.lock ${VIRTUAL_ENV}/
 
 # Python commands run inside the virtual environment
 RUN python -m pip install \
         parse \
         realpython-reader \
-        pipenv
-RUN pipenv install
+        poetry
+RUN poetry install
 
 COPY . ${VIRTUAL_ENV}/
