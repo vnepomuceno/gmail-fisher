@@ -6,6 +6,7 @@ import sys
 from dataclasses import dataclass
 from typing import List
 
+from .log import success, info, warning
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -39,7 +40,8 @@ class GmailMessage:
         try:
             match = re.search("[€][1-9]?[0-9].[0-9][0-9]", self.subject).group(0)
         except AttributeError:
-            print(f"⚠️  Could not match total payed (e.g. €12.30) for message id='{self.id}'")
+            warning('Could not match total payed (e.g. €12.30)', {'message_id': self.id})
+
             return 0
         return float(match.strip('€'))
 
@@ -54,7 +56,7 @@ class GmailMessage:
         try:
             return datetime.datetime.strptime(date_str, '%d %b %Y')
         except ValueError as ve:
-            print(f"⚠️  Date could not be parsed '{date_str}'. Raised error {ve}")
+            warning('Date could not be parsed', {'date': date_str, 'error': ve})
             return datetime.datetime.now()
 
     def ignore_message(self) -> bool:
@@ -98,7 +100,7 @@ def get_filtered_messages(credentials, sender_emails, keywords, max_results, get
     ).execute()
 
     if list_message_results['resultSizeEstimate'] == 0:
-        print('No messages found.')
+        info('No messages found')
         sys.exit(0)
 
     message_list = list()
@@ -114,7 +116,7 @@ def get_filtered_messages(credentials, sender_emails, keywords, max_results, get
                         filename=part['filename'],
                         id=part['body']['attachmentId']
                     )
-                    print(f"Attachment detected for {attachment}")
+                    success('Attachment detected', {'attachment': attachment})
                     attachment_list.append(attachment)
 
         message = GmailMessage(
@@ -124,7 +126,7 @@ def get_filtered_messages(credentials, sender_emails, keywords, max_results, get
             date=next(item for item in get_message_result['payload']['headers'] if item["name"] == "Date")['value'],
             attachments=attachment_list
         )
-        print(f"✅  Fetched message {message}")
+        success('Fetched message', {'message': message})
         message_list.append(message)
 
     return message_list
