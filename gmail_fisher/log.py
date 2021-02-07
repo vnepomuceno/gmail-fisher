@@ -18,5 +18,6 @@ def warning(message: str, data: dict):
 
 def _output_data(data: dict) -> str:
     data_output = ""
-    if data.__sizeof__() != 0: data_output += f", with data {data}"
+    if data.__sizeof__() != 0:
+        data_output += f", with data {data}"
     return data_output
