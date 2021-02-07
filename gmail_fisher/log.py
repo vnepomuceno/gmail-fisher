@@ -16,6 +16,11 @@ def warning(message: str, data: dict):
     print(f"{emojize(':warning:   ')} {message}{data_output}")
 
 
+def error(message: str, data: dict):
+    data_output = _output_data(data)
+    print(f"{emojize(':cross_mark:   ')} {message}{data_output}")
+
+
 def _output_data(data: dict) -> str:
     data_output = ""
     if data.__sizeof__() != 0:
