@@ -12,12 +12,12 @@ When the `--download-pdf` flag is inputted, if filtered messages contain attachm
 to an `output` directory and with a formatted name of `PaySlip_YYYY-MM.pdf`.
 
 ```
-$ python run.py save_attachments <SENDER_EMAILS> <KEYWORDS> --download-pdf
+python run.py save_attachments <SENDER_EMAILS> <KEYWORDS> --download-pdf
 ```
 
 Example:
 ```bash
-$ python run.py save_attachments 'me@my-company.com|payroll@my-company.com' 'payslip' --download-pdf
+python run.py save_attachments 'me@my-company.com|payroll@my-company.com' 'payslip' --download-pdf
 ```
 
 ## Plot Expenses
@@ -28,10 +28,25 @@ Tailored for UberEats receipts, it draws a bar plot with keys being the month an
 the values being the total of expenses payed for that month.
 
 ```
-$ python run.py stats <SENDER_EMAILS> <KEYWORDS> --download-pdf
+python run.py stats <SENDER_EMAILS> <KEYWORDS> --download-pdf
 ```
 
 Example:
 ```bash
-$ python run.py stats 'uber.portugal@uber.com' 'Total'
+python run.py stats 'uber.portugal@uber.com' 'Total'
+```
+
+## Save UberEats Expenses to Json
+
+Filters available messages with keyword `Total` and from sender email `uber.portugal@uber.com` and lists them.
+
+Scraps data from those messages to populate a `UberEatsExpense` objects that will then be serialized to a Json file.
+
+```
+python run.py save_uber_eats_expenses <OUTPUT_FILEPATH>
+```
+
+Example:
+```bash
+python run.py save_uber_eats_expenses ./gmail_fisher/output/uber_eats_expenses.json
 ```

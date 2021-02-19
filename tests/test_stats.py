@@ -8,10 +8,10 @@ class TestStats(unittest.TestCase):
         self.assertEqual(True, True)
 
     def test_get_arguments(self):
-        expected = dict(sender_emails='uber.portugal@uber.com', keywords='Total')
-        args = get_arguments(['run.py', 'stats', 'uber.portugal@uber.com', 'Total'])
+        expected = dict(sender_emails="uber.portugal@uber.com", keywords="Total")
+        args = get_arguments(["run.py", "stats", "uber.portugal@uber.com", "Total"])
         assert args == expected
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
