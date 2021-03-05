@@ -4,11 +4,26 @@
 
 Automation scripts for interacting with Gmail API 🎣
 
-## Save Attachments
+## Run Scripts
+
+### List Messages
 
 Filters available messages with `KEYWORDS` and from `SENDER_EMAILS` and lists them.
 
-When the `--download-pdf` flag is inputted, if filtered messages contain attachments, then those will be downloaded
+```
+poetry run list_messages --sender-email=<SENDER_EMAIL> --keywords=<KEYWORDS>
+```
+
+Example:
+```bash
+poetry run list_messages --sender-email='portugal-food@bolt.eu' --keywords='Delivery'
+```
+
+### Save Attachments
+
+Filters available messages with `KEYWORDS` and from `SENDER_EMAILS` and lists them.
+
+If filtered messages contain attachments, then those will be downloaded
 to an `output` directory and with a formatted name of `PaySlip_YYYY-MM.pdf`.
 
 ```
@@ -17,10 +32,10 @@ poetry run save_attachments --sender-email=<SENDER_EMAIL> --keywords=<KEYWORDS>
 
 Example:
 ```bash
-poetry run save_attachments --sender-email='me@my-company.com|payroll@my-company.com' --keywords='payslip' --download-pdf
+poetry run save_attachments --sender-email='me@my-company.com|payroll@my-company.com' --keywords='payslip'
 ```
 
-## Plot Expenses
+### Plot Expenses
 
 Filters available messages with `KEYWORDS` and from `SENDER_EMAILS` and lists them.
 
@@ -36,7 +51,7 @@ Example:
 poetry run uber_eats_stats --sender-email='uber.portugal@uber.com' --keywords='Total'
 ```
 
-## Save UberEats Expenses to Json
+### Save UberEats Expenses to Json
 
 Filters available messages with keyword `Total` and from sender email `uber.portugal@uber.com` and lists them.
 

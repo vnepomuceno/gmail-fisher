@@ -19,7 +19,7 @@ class UberEatsExpense:
 
 
 def plot_uber_eats_expenses(sender_email, keywords):
-    gmail_messages = GmailGateway.get_filtered_messages(
+    gmail_messages = GmailGateway.run_batch_get_message_detail(
         sender_emails=sender_email,
         keywords=keywords,
         max_results=1000,
@@ -30,7 +30,7 @@ def plot_uber_eats_expenses(sender_email, keywords):
 
 
 def save_uber_eats_expenses(output_filepath):
-    gmail_messages = GmailGateway.get_filtered_messages(
+    gmail_messages = GmailGateway.run_batch_get_message_detail(
         sender_emails="uber.portugal@uber.com",
         keywords="Total",
         max_results=1000,
