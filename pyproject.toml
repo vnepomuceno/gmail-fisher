@@ -7,14 +7,14 @@ authors = ["Valter Nepomuceno <valter.nep@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 google-auth = "^1.23.0"
-google-api-python-client = "^1.12.8"
+google-api-python-client = "^2.0.0"
 google-auth-oauthlib = "^0.4.2"
 google = "^3.0.0"
 matplotlib = "^3.3.3"
 emoji = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
+pytest = "^6.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
