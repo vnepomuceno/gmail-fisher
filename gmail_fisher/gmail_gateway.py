@@ -1,7 +1,6 @@
 import logging
 import os
 import pickle
-import sys
 from typing import List
 
 from google.auth.transport.requests import Request
@@ -45,61 +44,81 @@ class GmailClient:
         return credentials
 
 
-def get_filtered_messages(
-    sender_emails, keywords, max_results, get_attachments
-) -> List[GmailMessage]:
-    client = GmailClient.get_instance()
+def _list_message_ids(sender_emails: str, keywords: str, max_results: int) -> List[str]:
+    """
+    For a given sender email and comma-separated keywords, retrieve the matching
+    message IDs and return them as a list.
+    """
     list_message_results = (
-        client.users()
+        GmailClient.get_instance()
+        .users()
         .messages()
         .list(userId="me", q=f"from:{sender_emails} {keywords}", maxResults=max_results)
         .execute()
     )
 
     if list_message_results["resultSizeEstimate"] == 0:
-        logging.info("No messages found")
-        sys.exit(0)
-
-    message_list = list()
-    for message in list_message_results["messages"]:
-        get_message_result = (
-            client.users().messages().get(id=message["id"], userId="me").execute()
+        logging.warning(
+            f"No messages found for email='{sender_emails}', keywords='{keywords}'"
         )
-
-        attachment_list = list()
-        if get_attachments and get_message_result["payload"].keys().__contains__(
-            "parts"
-        ):
-            for part in get_message_result["payload"]["parts"]:
-                if part["mimeType"] in ["application/pdf", "application/octet-stream"]:
-                    attachment = MessageAttachment(
-                        part_id=part["partId"],
-                        filename=part["filename"],
-                        id=part["body"]["attachmentId"],
-                    )
-                    logging.info("Attachment detected", {"attachment": attachment})
-                    # success("Attachment detected", {"attachment": attachment})
-                    attachment_list.append(attachment)
-
-        message = GmailMessage(
-            id=message["id"],
-            subject=get_message_result["snippet"],
-            user_id="me",
-            date=next(
-                item
-                for item in get_message_result["payload"]["headers"]
-                if item["name"] == "Date"
-            )["value"],
-            attachments=attachment_list,
-        )
-        logging.info(f"Fetched message {message}")
-        # success("Fetched message", {"message": message})
-        message_list.append(message)
-
-    return message_list
+        return []
+    else:
+        message_ids = [message["id"] for message in list_message_results["messages"]]
+        logging.info(f"Found {len(message_ids)} message IDs {message_ids}")
+        return message_ids
 
 
-def get_message_attachment(message_id, attachment_id) -> str:
+def _get_message_detail(message_id: str) -> GmailMessage:
+    """
+    Fetches the detail of a message with a given message ID.
+    """
+    get_message_result = (
+        GmailClient.get_instance()
+        .users()
+        .messages()
+        .get(id=message_id, userId="me")
+        .execute()
+    )
+
+    attachment_list = list()
+    if get_message_result["payload"].keys().__contains__("parts"):
+        for part in get_message_result["payload"]["parts"]:
+            if part["mimeType"] in ["application/pdf", "application/octet-stream"]:
+                attachment = MessageAttachment(
+                    part_id=part["partId"],
+                    filename=part["filename"],
+                    id=part["body"]["attachmentId"],
+                )
+                attachment_list.append(attachment)
+
+    message = GmailMessage(
+        id=message_id,
+        subject=get_message_result["snippet"],
+        user_id="me",
+        date=next(
+            item
+            for item in get_message_result["payload"]["headers"]
+            if item["name"] == "Date"
+        )["value"],
+        attachments=attachment_list,
+    )
+    logging.info(f"Fetched message {message}")
+    return message
+
+
+def get_filtered_messages(
+    sender_emails: str, keywords: str, max_results: int
+) -> List[GmailMessage]:
+    """
+    For a given sender email and comma-separated keywords, retrieve the matching
+    messages and corresponding detailed metadata and returns a list of
+    `GmailMessage` objects.
+    """
+    message_ids = _list_message_ids(sender_emails, keywords, max_results)
+    return [_get_message_detail(message_id) for message_id in message_ids]
+
+
+def get_message_attachment(message_id: str, attachment_id: str) -> str:
     """
     Returns a base-64 string with the content for the .pdf attachment with 'message_id'
     and 'attachment_id'.

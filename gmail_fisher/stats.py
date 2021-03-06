@@ -8,8 +8,7 @@ from typing import List
 
 import matplotlib.pyplot as plt
 
-from .gmail_gateway import GmailMessage
-from .gmail_gateway import get_filtered_messages
+from .gmail_gateway import GmailMessage, get_filtered_messages
 
 
 @dataclass
@@ -25,7 +24,6 @@ def plot_uber_eats_expenses(argv):
         sender_emails=args["sender_emails"],
         keywords=args["keywords"],
         max_results=1000,
-        get_attachments=False,
     )
     stats = get_uber_eats_stats(gmail_messages)
     sorted_timeline_totals = get_sorted_dict(stats["timeline_totals"])
@@ -38,7 +36,6 @@ def save_uber_eats_expenses(argv):
         sender_emails="uber.portugal@uber.com",
         keywords="Total",
         max_results=1000,
-        get_attachments=False,
     )
     expenses = get_uber_eats_expenses(gmail_messages)
     json_expenses = serialize_expenses_to_json_file(expenses, filepath)

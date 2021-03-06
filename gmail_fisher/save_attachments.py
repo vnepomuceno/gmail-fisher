@@ -18,16 +18,17 @@ def gmail_save_attachments(argv):
         sender_emails=args["sender_emails"],
         keywords=args["keywords"],
         max_results=1000,
-        get_attachments=True,
     )
 
+    if not args["download"]:
+        return
+
     for message in messages:
-        if args["download"]:
-            for attachment in message.attachments:
-                base64_content = get_message_attachment(message.id, attachment.id)
-                save_base64_pdf(
-                    base64_content, get_payslip_filename(message.subject), message.id
-                )
+        for attachment in message.attachments:
+            base64_content = get_message_attachment(message.id, attachment.id)
+            save_base64_pdf(
+                base64_content, get_payslip_filename(message.subject), message.id
+            )
 
 
 def get_payslip_filename(subject: str) -> str:
