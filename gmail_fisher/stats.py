@@ -1,17 +1,14 @@
 import collections
 import datetime
 import json
-import os
+import logging
 import sys
 from dataclasses import dataclass
 from typing import List
 
 import matplotlib.pyplot as plt
 
-from .gmail_gateway import GmailMessage
-from .gmail_gateway import authenticate
-from .gmail_gateway import get_filtered_messages
-from .log import info, error, success
+from .gmail_gateway import GmailMessage, get_filtered_messages
 
 
 @dataclass
@@ -23,9 +20,10 @@ class UberEatsExpense:
 
 def plot_uber_eats_expenses(argv):
     args = get_arguments(argv)
-    credentials = authenticate()
     gmail_messages = get_filtered_messages(
-        credentials, args["sender_emails"], args["keywords"], 1000, False
+        sender_emails=args["sender_emails"],
+        keywords=args["keywords"],
+        max_results=1000,
     )
     stats = get_uber_eats_stats(gmail_messages)
     sorted_timeline_totals = get_sorted_dict(stats["timeline_totals"])
@@ -34,22 +32,24 @@ def plot_uber_eats_expenses(argv):
 
 def save_uber_eats_expenses(argv):
     filepath = argv[2]
-    credentials = authenticate()
     gmail_messages = get_filtered_messages(
-        credentials, "uber.portugal@uber.com", "Total", 1000, False
+        sender_emails="uber.portugal@uber.com",
+        keywords="Total",
+        max_results=1000,
     )
     expenses = get_uber_eats_expenses(gmail_messages)
     json_expenses = serialize_expenses_to_json_file(expenses, filepath)
-    success(
-        "Successfully written expenses to json file",
-        {"file": filepath, "json": json_expenses},
+    logging.info(
+        f"Successfully written expenses to json file with file='{filepath}', json='{json_expenses}'"
     )
 
 
 def get_uber_eats_stats(gmail_messages: List[GmailMessage]) -> dict:
     timeline_payed = dict()
     for message in gmail_messages:
-        info("Processing message", {"id": message.id, "subject": message.subject})
+        logging.info(
+            f"Processing message with id='{message.id}', subject='{message.subject}'"
+        )
 
         if message.ignore_message():
             print(
@@ -119,9 +119,8 @@ def get_uber_eats_expenses(gmail_messages: List[GmailMessage]) -> [UberEatsExpen
                 )
             )
         except IndexError:
-            error(
-                "Error fetching UberEats expense from email message",
-                {"subject": message.subject},
+            logging.error(
+                f"Error fetching UberEats expense from email message with subject={message.subject}"
             )
 
     return expenses

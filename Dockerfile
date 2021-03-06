@@ -1,4 +1,4 @@
-FROM python:3.8.5-slim
+FROM python:3.9-slim
 
 # Set up and activate virtual environment
 ENV VIRTUAL_ENV "/venv"

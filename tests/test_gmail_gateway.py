@@ -1,7 +1,7 @@
 import datetime
 import unittest
 
-from gmail_fisher.gmail_gateway import GmailMessage
+from gmail_fisher.models import GmailMessage
 
 
 class TestGmailGateway(unittest.TestCase):
