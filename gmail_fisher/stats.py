@@ -1,7 +1,6 @@
 import collections
 import datetime
 import json
-import os
 import sys
 from dataclasses import dataclass
 from typing import List
@@ -9,7 +8,6 @@ from typing import List
 import matplotlib.pyplot as plt
 
 from .gmail_gateway import GmailMessage
-from .gmail_gateway import authenticate
 from .gmail_gateway import get_filtered_messages
 from .log import info, error, success
 
@@ -23,9 +21,11 @@ class UberEatsExpense:
 
 def plot_uber_eats_expenses(argv):
     args = get_arguments(argv)
-    credentials = authenticate()
     gmail_messages = get_filtered_messages(
-        credentials, args["sender_emails"], args["keywords"], 1000, False
+        sender_emails=args["sender_emails"],
+        keywords=args["keywords"],
+        max_results=1000,
+        get_attachments=False,
     )
     stats = get_uber_eats_stats(gmail_messages)
     sorted_timeline_totals = get_sorted_dict(stats["timeline_totals"])
@@ -34,9 +34,11 @@ def plot_uber_eats_expenses(argv):
 
 def save_uber_eats_expenses(argv):
     filepath = argv[2]
-    credentials = authenticate()
     gmail_messages = get_filtered_messages(
-        credentials, "uber.portugal@uber.com", "Total", 1000, False
+        sender_emails="uber.portugal@uber.com",
+        keywords="Total",
+        max_results=1000,
+        get_attachments=False
     )
     expenses = get_uber_eats_expenses(gmail_messages)
     json_expenses = serialize_expenses_to_json_file(expenses, filepath)

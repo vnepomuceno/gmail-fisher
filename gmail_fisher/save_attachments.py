@@ -4,7 +4,6 @@ import base64
 import os
 import re
 
-from .gmail_gateway import authenticate
 from .gmail_gateway import get_filtered_messages
 from .gmail_gateway import get_message_attachment
 from .log import success
@@ -15,17 +14,17 @@ OUTPUT_DIRECTORY = "gmail_fisher/output/"
 
 def gmail_save_attachments(argv):
     args = get_arguments(argv)
-    credentials = authenticate()
     messages = get_filtered_messages(
-        credentials, args["sender_emails"], args["keywords"], 1000, True
+        sender_emails=args["sender_emails"],
+        keywords=args["keywords"],
+        max_results=1000,
+        get_attachments=True
     )
 
     for message in messages:
         if args["download"]:
             for attachment in message.attachments:
-                base64_content = get_message_attachment(
-                    credentials, message.id, attachment.id
-                )
+                base64_content = get_message_attachment(message.id, attachment.id)
                 save_base64_pdf(
                     base64_content, get_payslip_filename(message.subject), message.id
                 )
