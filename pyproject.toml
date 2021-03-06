@@ -5,7 +5,7 @@ description = "Automation scripts for interacting with Gmail API"
 authors = ["Valter Nepomuceno <valter.nep@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 google-auth = "^1.23.0"
 google-api-python-client = "^2.0.0"
 google-auth-oauthlib = "^0.4.2"
