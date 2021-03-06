@@ -11,7 +11,7 @@ google-api-python-client = "^2.0.0"
 google-auth-oauthlib = "^0.4.2"
 google = "^3.0.0"
 matplotlib = "^3.3.3"
-emoji = "^1.1.0"
+coloredlogs = "^15.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.0"

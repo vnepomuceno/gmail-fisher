@@ -1,3 +1,4 @@
+import logging
 import os
 import pickle
 import sys
@@ -9,7 +10,6 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
 from .models import GmailMessage, MessageAttachment
-from .log import success, info
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 CREDENTIALS_FILEPATH = "gmail_fisher/credentials.json"
@@ -57,7 +57,7 @@ def get_filtered_messages(
     )
 
     if list_message_results["resultSizeEstimate"] == 0:
-        info("No messages found")
+        logging.info("No messages found")
         sys.exit(0)
 
     message_list = list()
@@ -77,7 +77,8 @@ def get_filtered_messages(
                         filename=part["filename"],
                         id=part["body"]["attachmentId"],
                     )
-                    success("Attachment detected", {"attachment": attachment})
+                    logging.info("Attachment detected", {"attachment": attachment})
+                    # success("Attachment detected", {"attachment": attachment})
                     attachment_list.append(attachment)
 
         message = GmailMessage(
@@ -91,7 +92,8 @@ def get_filtered_messages(
             )["value"],
             attachments=attachment_list,
         )
-        success("Fetched message", {"message": message})
+        logging.info(f"Fetched message {message}")
+        # success("Fetched message", {"message": message})
         message_list.append(message)
 
     return message_list

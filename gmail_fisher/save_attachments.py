@@ -1,12 +1,12 @@
 from __future__ import print_function
 
 import base64
+import logging
 import os
 import re
 
 from .gmail_gateway import get_filtered_messages
 from .gmail_gateway import get_message_attachment
-from .log import success
 
 DOWNLOAD_PDF_FLAG = "--download-pdf"
 OUTPUT_DIRECTORY = "gmail_fisher/output/"
@@ -18,7 +18,7 @@ def gmail_save_attachments(argv):
         sender_emails=args["sender_emails"],
         keywords=args["keywords"],
         max_results=1000,
-        get_attachments=True
+        get_attachments=True,
     )
 
     for message in messages:
@@ -44,11 +44,9 @@ def save_base64_pdf(base64_string: str, file_name: str, message_id: str):
     file_handle = open(f"{OUTPUT_DIRECTORY}{file_name}", "wb")
     file_handle.write(file_data)
     file_handle.close()
-    success(
-        "Successfully saved attachment",
-        {"filename": file_name, "message_id": message_id},
+    logging.info(
+        f"Successfully saved attachment with filename='{file_name}' and message_id='{message_id}'"
     )
-    print("----------------------------------------")
 
 
 def get_arguments(argv) -> dict:

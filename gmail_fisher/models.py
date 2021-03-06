@@ -1,9 +1,8 @@
+import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List
-
-from .log import warning
 
 
 @dataclass
@@ -29,8 +28,8 @@ class GmailMessage:
         try:
             match = re.search("[€][1-9]?[0-9].[0-9][0-9]", self.subject).group(0)
         except AttributeError:
-            warning(
-                "Could not match total payed (e.g. €12.30)", {"message_id": self.id}
+            logging.warning(
+                f"Could not match total payed (e.g. €12.30) with message_id='{self.id}'"
             )
 
             return 0
@@ -47,7 +46,9 @@ class GmailMessage:
         try:
             return datetime.strptime(date_str, "%d %b %Y")
         except ValueError as ve:
-            warning("Date could not be parsed", {"date": date_str, "error": ve})
+            logging.warning(
+                f"Date could not be parsed with date='{date_str}', error='{ve}'"
+            )
             return datetime.datetime.now()
 
     def ignore_message(self) -> bool:
