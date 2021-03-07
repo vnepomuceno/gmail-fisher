@@ -2,13 +2,13 @@ import collections
 import datetime
 import json
 import logging
-import sys
 from dataclasses import dataclass
 from typing import List
 
 import matplotlib.pyplot as plt
 
-from .gmail_gateway import GmailMessage, get_filtered_messages
+from .gmail_gateway import GmailGateway
+from .models import GmailMessage
 
 
 @dataclass
@@ -19,7 +19,7 @@ class UberEatsExpense:
 
 
 def plot_uber_eats_expenses(sender_email, keywords):
-    gmail_messages = get_filtered_messages(
+    gmail_messages = GmailGateway.get_filtered_messages(
         sender_emails=sender_email,
         keywords=keywords,
         max_results=1000,
@@ -30,7 +30,7 @@ def plot_uber_eats_expenses(sender_email, keywords):
 
 
 def save_uber_eats_expenses(output_filepath):
-    gmail_messages = get_filtered_messages(
+    gmail_messages = GmailGateway.get_filtered_messages(
         sender_emails="uber.portugal@uber.com",
         keywords="Total",
         max_results=1000,

@@ -5,15 +5,14 @@ import logging
 import os
 import re
 
-from .gmail_gateway import get_filtered_messages
-from .gmail_gateway import get_message_attachment
+from .gmail_gateway import GmailGateway
 
 DOWNLOAD_PDF_FLAG = "--download-pdf"
 OUTPUT_DIRECTORY = "gmail_fisher/output/"
 
 
 def gmail_save_attachments(sender_email, keywords, download_pdf):
-    messages = get_filtered_messages(
+    messages = GmailGateway.get_filtered_messages(
         sender_emails=sender_email,
         keywords=keywords,
         max_results=1000,
@@ -24,7 +23,9 @@ def gmail_save_attachments(sender_email, keywords, download_pdf):
 
     for message in messages:
         for attachment in message.attachments:
-            base64_content = get_message_attachment(message.id, attachment.id)
+            base64_content = GmailGateway.get_message_attachment(
+                message.id, attachment.id
+            )
             save_base64_pdf(
                 base64_content, get_payslip_filename(message.subject), message.id
             )

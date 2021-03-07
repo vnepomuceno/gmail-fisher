@@ -11,7 +11,9 @@ from gmail_fisher.stats import save_uber_eats_expenses
 @click.command()
 @click.option("--sender-email", help="Sender email to filter messages")
 @click.option("--keywords", help="Keywords to filter messages")
-@click.option("--download-pdf", is_flag=True, help="Download attachments as PDF files if enabled")
+@click.option(
+    "--download-pdf", is_flag=True, help="Download attachments as PDF files if enabled"
+)
 def save_attachments_command(sender_email, keywords, download_pdf):
     logging.info(
         f"Running save_attachments with sender_email='{sender_email}', keywords='{keywords}', download_pdf='{download_pdf}'"
