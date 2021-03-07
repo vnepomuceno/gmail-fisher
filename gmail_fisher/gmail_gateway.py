@@ -44,90 +44,100 @@ class GmailClient:
         return credentials
 
 
-def _list_message_ids(sender_emails: str, keywords: str, max_results: int) -> List[str]:
-    """
-    For a given sender email and comma-separated keywords, retrieve the matching
-    message IDs and return them as a list.
-    """
-    list_message_results = (
-        GmailClient.get_instance()
-        .users()
-        .messages()
-        .list(userId="me", q=f"from:{sender_emails} {keywords}", maxResults=max_results)
-        .execute()
-    )
-
-    if list_message_results["resultSizeEstimate"] == 0:
-        logging.warning(
-            f"No messages found for email='{sender_emails}', keywords='{keywords}'"
+class GmailGateway:
+    @classmethod
+    def __list_message_ids(
+        cls, sender_emails: str, keywords: str, max_results: int
+    ) -> List[str]:
+        """
+        For a given sender email and comma-separated keywords, retrieve the matching
+        message IDs and return them as a list.
+        """
+        list_message_results = (
+            GmailClient.get_instance()
+            .users()
+            .messages()
+            .list(
+                userId="me",
+                q=f"from:{sender_emails} {keywords}",
+                maxResults=max_results,
+            )
+            .execute()
         )
-        return []
-    else:
-        message_ids = [message["id"] for message in list_message_results["messages"]]
-        logging.info(f"Found {len(message_ids)} message IDs {message_ids}")
-        return message_ids
 
+        if list_message_results["resultSizeEstimate"] == 0:
+            logging.warning(
+                f"No messages found for email='{sender_emails}', keywords='{keywords}'"
+            )
+            return []
+        else:
+            message_ids = [
+                message["id"] for message in list_message_results["messages"]
+            ]
+            logging.info(f"Found {len(message_ids)} message IDs {message_ids}")
+            return message_ids
 
-def _get_message_detail(message_id: str) -> GmailMessage:
-    """
-    Fetches the detail of a message with a given message ID.
-    """
-    get_message_result = (
-        GmailClient.get_instance()
-        .users()
-        .messages()
-        .get(id=message_id, userId="me")
-        .execute()
-    )
+    @classmethod
+    def __get_message_detail(cls, message_id: str) -> GmailMessage:
+        """
+        Fetches the detail of a message with a given message ID.
+        """
+        get_message_result = (
+            GmailClient.get_instance()
+            .users()
+            .messages()
+            .get(id=message_id, userId="me")
+            .execute()
+        )
 
-    attachment_list = list()
-    if get_message_result["payload"].keys().__contains__("parts"):
-        for part in get_message_result["payload"]["parts"]:
-            if part["mimeType"] in ["application/pdf", "application/octet-stream"]:
-                attachment = MessageAttachment(
-                    part_id=part["partId"],
-                    filename=part["filename"],
-                    id=part["body"]["attachmentId"],
-                )
-                attachment_list.append(attachment)
+        attachment_list = list()
+        if get_message_result["payload"].keys().__contains__("parts"):
+            for part in get_message_result["payload"]["parts"]:
+                if part["mimeType"] in ["application/pdf", "application/octet-stream"]:
+                    attachment = MessageAttachment(
+                        part_id=part["partId"],
+                        filename=part["filename"],
+                        id=part["body"]["attachmentId"],
+                    )
+                    attachment_list.append(attachment)
 
-    message = GmailMessage(
-        id=message_id,
-        subject=get_message_result["snippet"],
-        user_id="me",
-        date=next(
-            item
-            for item in get_message_result["payload"]["headers"]
-            if item["name"] == "Date"
-        )["value"],
-        attachments=attachment_list,
-    )
-    logging.info(f"Fetched message {message}")
-    return message
+        message = GmailMessage(
+            id=message_id,
+            subject=get_message_result["snippet"],
+            user_id="me",
+            date=next(
+                item
+                for item in get_message_result["payload"]["headers"]
+                if item["name"] == "Date"
+            )["value"],
+            attachments=attachment_list,
+        )
+        logging.info(f"Fetched message {message}")
+        return message
 
+    @classmethod
+    def get_filtered_messages(
+        cls, sender_emails: str, keywords: str, max_results: int
+    ) -> List[GmailMessage]:
+        """
+        For a given sender email and comma-separated keywords, retrieve the matching
+        messages and corresponding detailed metadata and returns a list of
+        `GmailMessage` objects.
+        """
+        message_ids = cls.__list_message_ids(sender_emails, keywords, max_results)
+        return [cls.__get_message_detail(message_id) for message_id in message_ids]
 
-def get_filtered_messages(
-    sender_emails: str, keywords: str, max_results: int
-) -> List[GmailMessage]:
-    """
-    For a given sender email and comma-separated keywords, retrieve the matching
-    messages and corresponding detailed metadata and returns a list of
-    `GmailMessage` objects.
-    """
-    message_ids = _list_message_ids(sender_emails, keywords, max_results)
-    return [_get_message_detail(message_id) for message_id in message_ids]
-
-
-def get_message_attachment(message_id: str, attachment_id: str) -> str:
-    """
-    Returns a base-64 string with the content for the .pdf attachment with 'message_id'
-    and 'attachment_id'.
-    """
-    client = GmailClient.get_instance()
-    return (
-        client.users()
-        .messages()
-        .attachments()
-        .get(userId="me", messageId=message_id, id=attachment_id)
-        .execute()["data"]
-    )
+    @classmethod
+    def get_message_attachment(cls, message_id: str, attachment_id: str) -> str:
+        """
+        Returns a base-64 string with the content for the .pdf attachment with 'message_id'
+        and 'attachment_id'.
+        """
+        return (
+            GmailClient.get_instance()
+            .users()
+            .messages()
+            .attachments()
+            .get(userId="me", messageId=message_id, id=attachment_id)
+            .execute()["data"]
+        )

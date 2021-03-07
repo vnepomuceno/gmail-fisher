@@ -2,13 +2,13 @@ import collections
 import datetime
 import json
 import logging
-import sys
 from dataclasses import dataclass
 from typing import List
 
 import matplotlib.pyplot as plt
 
-from .gmail_gateway import GmailMessage, get_filtered_messages
+from .gmail_gateway import GmailGateway
+from .models import GmailMessage
 
 
 @dataclass
@@ -18,11 +18,10 @@ class UberEatsExpense:
     date: datetime
 
 
-def plot_uber_eats_expenses(argv):
-    args = get_arguments(argv)
-    gmail_messages = get_filtered_messages(
-        sender_emails=args["sender_emails"],
-        keywords=args["keywords"],
+def plot_uber_eats_expenses(sender_email, keywords):
+    gmail_messages = GmailGateway.get_filtered_messages(
+        sender_emails=sender_email,
+        keywords=keywords,
         max_results=1000,
     )
     stats = get_uber_eats_stats(gmail_messages)
@@ -30,17 +29,16 @@ def plot_uber_eats_expenses(argv):
     draw_bar_plot(sorted_timeline_totals, stats["total_payed"])
 
 
-def save_uber_eats_expenses(argv):
-    filepath = argv[2]
-    gmail_messages = get_filtered_messages(
+def save_uber_eats_expenses(output_filepath):
+    gmail_messages = GmailGateway.get_filtered_messages(
         sender_emails="uber.portugal@uber.com",
         keywords="Total",
         max_results=1000,
     )
     expenses = get_uber_eats_expenses(gmail_messages)
-    json_expenses = serialize_expenses_to_json_file(expenses, filepath)
+    json_expenses = serialize_expenses_to_json_file(expenses, output_filepath)
     logging.info(
-        f"Successfully written expenses to json file with file='{filepath}', json='{json_expenses}'"
+        f"Successfully written expenses to json file with file='{output_filepath}', json='{json_expenses}'"
     )
 
 
@@ -140,23 +138,6 @@ def get_sorted_dict(dictionary: dict) -> dict:
         sorted_dict.update({key: dictionary[key]})
 
     return sorted_dict
-
-
-def get_arguments(argv) -> dict:
-    """
-    Receives sys.argv as argument and returns a dictionary of `sender_emails` and `keywords`,
-    or exits the program if those two arguments are not provided
-    """
-    try:
-        sender_emails = argv[2].strip("'")
-        keywords = argv[3].strip("'")
-        print(
-            f"Stats script with sender_emails='{sender_emails}' and keywords='{keywords}' 📈"
-        )
-        return dict(sender_emails=sender_emails, keywords=keywords)
-    except IndexError:
-        print("❌  Could not parse arguments $1=sender_emails, $2=keywords")
-        sys.exit(1)
 
 
 def draw_bar_plot(months_totals: dict, total_payed: float):
