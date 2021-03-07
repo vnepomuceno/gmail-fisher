@@ -12,12 +12,12 @@ When the `--download-pdf` flag is inputted, if filtered messages contain attachm
 to an `output` directory and with a formatted name of `PaySlip_YYYY-MM.pdf`.
 
 ```
-python run.py save_attachments <SENDER_EMAILS> <KEYWORDS> --download-pdf
+poetry run save_attachments --sender-email=<SENDER_EMAIL> --keywords=<KEYWORDS>
 ```
 
 Example:
 ```bash
-python run.py save_attachments 'me@my-company.com|payroll@my-company.com' 'payslip' --download-pdf
+poetry run save_attachments --sender-email='me@my-company.com|payroll@my-company.com' --keywords='payslip' --download-pdf
 ```
 
 ## Plot Expenses
@@ -28,12 +28,12 @@ Tailored for UberEats receipts, it draws a bar plot with keys being the month an
 the values being the total of expenses payed for that month.
 
 ```
-python run.py stats <SENDER_EMAILS> <KEYWORDS> --download-pdf
+poetry run uber_eats_stats --sender-email=<SENDER_EMAILS> --keywords=<KEYWORDS>
 ```
 
 Example:
 ```bash
-python run.py stats 'uber.portugal@uber.com' 'Total'
+poetry run uber_eats_stats --sender-email='uber.portugal@uber.com' --keywords='Total'
 ```
 
 ## Save UberEats Expenses to Json
@@ -43,10 +43,10 @@ Filters available messages with keyword `Total` and from sender email `uber.port
 Scraps data from those messages to populate a `UberEatsExpense` objects that will then be serialized to a Json file.
 
 ```
-python run.py save_uber_eats_expenses <OUTPUT_FILEPATH>
+poetry run uber_eats_save_expenses --output-filepath=<OUTPUT_FILEPATH>
 ```
 
 Example:
 ```bash
-python run.py save_uber_eats_expenses ./gmail_fisher/output/uber_eats_expenses.json
+poetry run uber_eats_save_expenses --output-filepath='./gmail_fisher/output/uber_eats_expenses.json'
 ```

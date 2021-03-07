@@ -12,15 +12,14 @@ DOWNLOAD_PDF_FLAG = "--download-pdf"
 OUTPUT_DIRECTORY = "gmail_fisher/output/"
 
 
-def gmail_save_attachments(argv):
-    args = get_arguments(argv)
+def gmail_save_attachments(sender_email, keywords, download_pdf):
     messages = get_filtered_messages(
-        sender_emails=args["sender_emails"],
-        keywords=args["keywords"],
+        sender_emails=sender_email,
+        keywords=keywords,
         max_results=1000,
     )
 
-    if not args["download"]:
+    if not download_pdf:
         return
 
     for message in messages:
