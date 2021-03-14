@@ -8,6 +8,7 @@ authors = ["Valter Nepomuceno <valter.nep@gmail.com>"]
 save_attachments = "gmail_fisher.run:save_attachments_command"
 uber_eats_stats = "gmail_fisher.run:uber_eats_stats_command"
 uber_eats_save_expenses = "gmail_fisher.run:uber_eats_save_expenses_command"
+list_messages = "gmail_fisher.run:list_messages_command"
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -19,6 +20,7 @@ matplotlib = "^3.3.3"
 coloredlogs = "^15.0"
 click = "^7.1.2"
 black = "^20.8b1"
+asyncio = "^3.4.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.0"

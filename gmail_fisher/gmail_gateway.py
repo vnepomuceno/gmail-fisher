@@ -1,12 +1,18 @@
+import base64
+import concurrent
 import logging
 import os
 import pickle
-from typing import List
+import re
+from concurrent.futures.thread import ThreadPoolExecutor
+from typing import List, Callable, Iterable
 
+import google_auth_httplib2
+import httplib2
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
+from googleapiclient.discovery import build, Resource
 
 from .models import GmailMessage, MessageAttachment
 
@@ -16,10 +22,16 @@ TOKEN_PICKLE_FILEPATH = "token.pickle"
 
 
 class GmailClient:
-    __instance = None
+    __instance: Resource = None
 
     @classmethod
-    def get_instance(cls):
+    def auth_http_request(cls) -> google_auth_httplib2.AuthorizedHttp:
+        return google_auth_httplib2.AuthorizedHttp(
+            cls.__authenticate(), http=httplib2.Http()
+        )
+
+    @classmethod
+    def get_instance(cls) -> Resource:
         if not cls.__instance:
             credentials = cls.__authenticate()
             cls.__instance = build("gmail", "v1", credentials=credentials)
@@ -62,7 +74,7 @@ class GmailGateway:
                 q=f"from:{sender_emails} {keywords}",
                 maxResults=max_results,
             )
-            .execute()
+            .execute(http=GmailClient.auth_http_request())
         )
 
         if list_message_results["resultSizeEstimate"] == 0:
@@ -87,7 +99,7 @@ class GmailGateway:
             .users()
             .messages()
             .get(id=message_id, userId="me")
-            .execute()
+            .execute(http=GmailClient.auth_http_request())
         )
 
         attachment_list = list()
@@ -116,19 +128,58 @@ class GmailGateway:
         return message
 
     @classmethod
-    def get_filtered_messages(
+    def run_batch_get_message_detail(
         cls, sender_emails: str, keywords: str, max_results: int
-    ) -> List[GmailMessage]:
-        """
-        For a given sender email and comma-separated keywords, retrieve the matching
-        messages and corresponding detailed metadata and returns a list of
-        `GmailMessage` objects.
-        """
-        message_ids = cls.__list_message_ids(sender_emails, keywords, max_results)
-        return [cls.__get_message_detail(message_id) for message_id in message_ids]
+    ) -> Iterable[GmailMessage]:
+        results = []
+        message_ids = GmailGateway.__list_message_ids(
+            sender_emails, keywords, max_results
+        )
+        with ThreadPoolExecutor(max_workers=20) as pool:
+            futures = [
+                pool.submit(GmailGateway.__get_message_detail, message_id)
+                for message_id in message_ids
+            ]
+
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    result = future.result()
+                    results.append(result)
+                except Exception as ex:
+                    logging.error(f"Error fetching future result {ex}")
+
+        logging.info(
+            f"TOTAL SUCCESSFUL RESULTS {len(results)} for 'run_batch_get_message_detail'"
+        )
+        return results
 
     @classmethod
-    def get_message_attachment(cls, message_id: str, attachment_id: str) -> str:
+    def run_batch_save_pdf_attachments(cls, messages: Iterable[GmailMessage]):
+        with ThreadPoolExecutor(max_workers=20) as pool:
+            future_mappings = {}
+            for message in messages:
+                for attachment in message.attachments:
+                    future = pool.submit(
+                        GmailGateway.__get_message_attachment,
+                        message.id,
+                        attachment.id,
+                    )
+                    future_mappings[future] = (message.id, message.subject)
+
+            for future in concurrent.futures.as_completed(future_mappings.keys()):
+                try:
+                    base64_content = future.result()
+                    message_id, message_subject = future_mappings[future]
+                    FileUtils.save_base64_pdf(
+                        base64_content,
+                        FileUtils.get_payslip_filename(message_subject),
+                        message_id,
+                    )
+                except Exception as ex:
+                    logging.error(f"Error fetching future result {ex}")
+
+    @classmethod
+    def __get_message_attachment(cls, message_id: str, attachment_id: str) -> str:
         """
         Returns a base-64 string with the content for the .pdf attachment with 'message_id'
         and 'attachment_id'.
@@ -139,5 +190,28 @@ class GmailGateway:
             .messages()
             .attachments()
             .get(userId="me", messageId=message_id, id=attachment_id)
-            .execute()["data"]
+            .execute(http=GmailClient.auth_http_request())["data"]
+        )
+
+
+class FileUtils:
+    __OUTPUT_DIRECTORY = "gmail_fisher/output/"
+
+    @classmethod
+    def get_payslip_filename(cls, subject: str) -> str:
+        match = re.search("[1-9]?[0-9][-][1-9][0-9][0-9][0-9]", subject).group(0)
+        date = f"{match.split('-')[1]}-{match.split('-')[0]}"
+        return f"PaySlip_{date}.pdf"
+
+    @classmethod
+    def save_base64_pdf(cls, base64_string: str, file_name: str, message_id: str):
+        file_data = base64.urlsafe_b64decode(base64_string.encode("UTF-8"))
+
+        if not os.path.isdir(cls.__OUTPUT_DIRECTORY):
+            os.mkdir(cls.__OUTPUT_DIRECTORY)
+        file_handle = open(f"{cls.__OUTPUT_DIRECTORY}{file_name}", "wb")
+        file_handle.write(file_data)
+        file_handle.close()
+        logging.info(
+            f"Successfully saved attachment with filename='{file_name}' and message_id='{message_id}'"
         )
