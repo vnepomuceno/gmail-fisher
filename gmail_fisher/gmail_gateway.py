@@ -3,7 +3,6 @@ import concurrent
 import logging
 import os
 import pickle
-import re
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import List, Iterable
 
@@ -15,13 +14,13 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build, Resource
 
 from .models import GmailMessage, MessageAttachment
-
-SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
-CREDENTIALS_FILEPATH = "gmail_fisher/credentials.json"
-TOKEN_PICKLE_FILEPATH = "token.pickle"
+from .utils import FileUtils
 
 
 class GmailClient:
+    __SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+    __CREDENTIALS_FILEPATH = "gmail_fisher/credentials.json"
+    __TOKEN_PICKLE_FILEPATH = "token.pickle"
     __instance: Resource = None
 
     @classmethod
@@ -40,18 +39,18 @@ class GmailClient:
     @classmethod
     def __authenticate(cls) -> Credentials:
         credentials = None
-        if os.path.exists(TOKEN_PICKLE_FILEPATH):
-            with open(TOKEN_PICKLE_FILEPATH, "rb") as token:
+        if os.path.exists(cls.__TOKEN_PICKLE_FILEPATH):
+            with open(cls.__TOKEN_PICKLE_FILEPATH, "rb") as token:
                 credentials = pickle.load(token)
         if not credentials or not credentials.valid:
             if credentials and credentials.expired and credentials.refresh_token:
                 credentials.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    CREDENTIALS_FILEPATH, SCOPES
+                    cls.__CREDENTIALS_FILEPATH, cls.__SCOPES
                 )
                 credentials = flow.run_local_server(port=0)
-            with open(TOKEN_PICKLE_FILEPATH, "wb") as token:
+            with open(cls.__TOKEN_PICKLE_FILEPATH, "wb") as token:
                 pickle.dump(credentials, token)
         return credentials
 
@@ -218,27 +217,4 @@ class GmailGateway:
             .attachments()
             .get(userId="me", messageId=message_id, id=attachment_id)
             .execute(http=GmailClient.auth_http_request())["data"]
-        )
-
-
-class FileUtils:
-    __OUTPUT_DIRECTORY = "gmail_fisher/output/"
-
-    @classmethod
-    def get_payslip_filename(cls, subject: str) -> str:
-        match = re.search("[1-9]?[0-9][-][1-9][0-9][0-9][0-9]", subject).group(0)
-        date = f"{match.split('-')[1]}-{match.split('-')[0]}"
-        return f"PaySlip_{date}.pdf"
-
-    @classmethod
-    def save_base64_pdf(cls, base64_string: str, file_name: str, message_id: str):
-        file_data = base64.urlsafe_b64decode(base64_string.encode("UTF-8"))
-
-        if not os.path.isdir(cls.__OUTPUT_DIRECTORY):
-            os.mkdir(cls.__OUTPUT_DIRECTORY)
-        file_handle = open(f"{cls.__OUTPUT_DIRECTORY}{file_name}", "wb")
-        file_handle.write(file_data)
-        file_handle.close()
-        logging.info(
-            f"Successfully saved attachment with filename='{file_name}' and message_id='{message_id}'"
         )

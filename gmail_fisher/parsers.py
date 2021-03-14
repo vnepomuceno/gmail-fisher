@@ -35,6 +35,13 @@ class FoodExpenseParser:
 class BoltFoodParser(FoodExpenseParser):
     __SENDER_EMAIL = "portugal-food@bolt.eu"
     __KEYWORDS = "Delivery from Bolt Food"
+    __RESTAURANT_FILTERS = {
+        " - Saldanha Avenida Casal Ribeiro, 50 B , 1000-093 To Praça Aniceto do Rosário, Lisbon 1 Hamburguer X": "",
+        " - Saldanha Av. Miguel Bombarda, 23B": "",
+        " Rua do saco 50, 1150-284 Lisboa To Praça Aniceto do Rosário, Lisbon 1 🎁 2x1": "",
+        " - Av. Roma Avenida de Roma 74 B": "",
+        "&#39;": "'",
+    }
 
     @classmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
@@ -50,29 +57,15 @@ class BoltFoodParser(FoodExpenseParser):
     @classmethod
     def parse_expenses_from_messages(
         cls, gmail_messages: Iterable[GmailMessage]
-    ) -> [BoltFoodExpense]:
+    ) -> Iterable[BoltFoodExpense]:
         expenses = []
         for message in gmail_messages:
             try:
-                restaurant_str = re.search(r"From .* -", message.subject).group()[5:-2]
-                restaurant = (
-                    restaurant_str.replace(
-                        " - Saldanha Avenida Casal Ribeiro, 50 B , 1000-093 To Praça Aniceto do Rosário, Lisbon 1 Hamburguer X",
-                        "",
-                    )
-                    .replace(" - Saldanha Av. Miguel Bombarda, 23B", "")
-                    .replace(
-                        " Rua do saco 50, 1150-284 Lisboa To Praça Aniceto do Rosário, Lisbon 1 🎁 2x1",
-                        "",
-                    )
-                    .replace("&#39;", "'")
-                )
-                date_arr = message.subject.split(" ")[0].split("-")
-                date = f"{date_arr[2]}-{date_arr[1]}-{date_arr[0]}"
-                total = cls.__get_bolt_total_payed_from_body(message)
-                expenses.append(
-                    BoltFoodExpense(restaurant=restaurant, total=total, date=date)
-                )
+                restaurant = cls.__get_restaurant(message, cls.__RESTAURANT_FILTERS)
+                total = cls.__get_total_payed(message)
+                date = cls.__get_date(message)
+
+                expenses.append(BoltFoodExpense(restaurant, total, date))
                 logging.info(f"RESTAURANT: {restaurant}")
             except Exception as ex:
                 logging.error(f"ERROR for subject={message.subject}")
@@ -80,7 +73,22 @@ class BoltFoodParser(FoodExpenseParser):
         return expenses
 
     @staticmethod
-    def __get_bolt_total_payed_from_body(message: GmailMessage) -> Optional[float]:
+    def __get_restaurant(
+        message: GmailMessage, filters: dict[str, str]
+    ) -> Optional[str]:
+        restaurant = re.search(r"From .* -", message.subject).group()[5:-2]
+        for exclude_str, replace_str in filters.items():
+            restaurant = restaurant.replace(exclude_str, replace_str)
+
+        return restaurant
+
+    @staticmethod
+    def __get_date(message: GmailMessage) -> str:
+        date_arr = message.subject.split(" ")[0].split("-")
+        return f"{date_arr[2]}-{date_arr[1]}-{date_arr[0]}"
+
+    @staticmethod
+    def __get_total_payed(message: GmailMessage) -> Optional[float]:
         try:
             return float(
                 re.search(r"\*[0-9]*[0-9]+.[0-9][0-9]€\*", message.body)
@@ -96,6 +104,25 @@ class BoltFoodParser(FoodExpenseParser):
 class UberEatsParser(FoodExpenseParser):
     __SENDER_EMAIL = "uber.portugal@uber.com"
     __KEYWORDS = "Total"
+    __RESTAURANT_FILTERS = {
+        "&#39;": "'",
+        "&amp;": "&",
+        "\u00ae": "",
+        " 🐠": "",
+        " (Marquês de Pombal)": "",
+        "® (Saldanha)": "",
+        " (Saldanha)": "",
+        " (General Roçadas)": "",
+        " (Fontes Pereira de Melo)": "",
+        " (São Sebastião)": "",
+        " (Graça)": "",
+        " (Monumental)": "",
+        " (Saldanha Residence)": "",
+        " (República)": "",
+        " (Sta": "",
+        " (Barata Salgueiro)": "",
+        " (Rossio)": "",
+    }
 
     @classmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
@@ -111,38 +138,36 @@ class UberEatsParser(FoodExpenseParser):
     @classmethod
     def parse_expenses_from_messages(
         cls, gmail_messages: Iterable[GmailMessage]
-    ) -> [UberEatsExpense]:
+    ) -> Iterable[UberEatsExpense]:
         expenses = []
         for message in gmail_messages:
             try:
-                expenses.append(
-                    UberEatsExpense(
-                        restaurant=message.subject.split("receipt for ")[1]
-                        .split(".")[0]
-                        .replace("&#39;", "'")
-                        .replace("&amp;", "&")
-                        .replace("\u00ae", "")
-                        .replace(" 🐠", "")
-                        .replace(" (Marquês de Pombal)", "")
-                        .replace("® (Saldanha)", "")
-                        .replace(" (Saldanha)", "")
-                        .replace(" (General Roçadas)", "")
-                        .replace(" (Fontes Pereira de Melo)", "")
-                        .replace(" (São Sebastião)", "")
-                        .replace(" (Graça)", "")
-                        .replace(" (Monumental)", "")
-                        .replace(" (Saldanha Residence)", "")
-                        .replace(" (República)", "")
-                        .replace(" (Sta", "")
-                        .replace(" (Barata Salgueiro)", "")
-                        .replace(" (Rossio)", ""),
-                        total=float(message.subject.split(" ")[1].replace("€", "")),
-                        date=message.get_date_as_datetime().date().__str__(),
-                    )
-                )
+                restaurant = cls.__get_restaurant(message, cls.__RESTAURANT_FILTERS)
+                total = cls.__get_total_payed(message)
+                date = cls.__get_date(message)
+
+                expenses.append(UberEatsExpense(restaurant, total, date))
             except IndexError:
                 logging.error(
                     f"Error fetching UberEats expense from email message with subject={message.subject}"
                 )
 
         return expenses
+
+    @staticmethod
+    def __get_restaurant(
+        message: GmailMessage, filters: dict[str, str]
+    ) -> Optional[str]:
+        restaurant = message.subject.split("receipt for ")[1].split(".")[0]
+        for exclude_str, replace_str in filters.items():
+            restaurant = restaurant.replace(exclude_str, replace_str)
+
+        return restaurant
+
+    @staticmethod
+    def __get_total_payed(message: GmailMessage) -> float:
+        return float(message.subject.split(" ")[1].replace("€", ""))
+
+    @staticmethod
+    def __get_date(message: GmailMessage):
+        return message.get_date_as_datetime().date().__str__()
