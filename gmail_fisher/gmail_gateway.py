@@ -5,7 +5,7 @@ import os
 import pickle
 import re
 from concurrent.futures.thread import ThreadPoolExecutor
-from typing import List, Callable, Iterable
+from typing import List, Iterable
 
 import google_auth_httplib2
 import httplib2
@@ -90,7 +90,7 @@ class GmailGateway:
             return message_ids
 
     @classmethod
-    def __get_message_detail(cls, message_id: str) -> GmailMessage:
+    def __get_message_detail(cls, message_id: str, fetch_body: bool) -> GmailMessage:
         """
         Fetches the detail of a message with a given message ID.
         """
@@ -116,7 +116,6 @@ class GmailGateway:
         message = GmailMessage(
             id=message_id,
             subject=get_message_result["snippet"],
-            user_id="me",
             date=next(
                 item
                 for item in get_message_result["payload"]["headers"]
@@ -125,11 +124,38 @@ class GmailGateway:
             attachments=attachment_list,
         )
         logging.info(f"Fetched message {message}")
+
+        if not fetch_body:
+            return message
+
+        try:
+            if get_message_result["payload"]["body"]["size"] == 0:
+                message_parts = get_message_result["payload"].get("parts", None)
+                message.body = (
+                    base64.urlsafe_b64decode(message_parts[0]["body"]["data"])
+                    .decode("utf-8")
+                    .replace("\n", "")
+                )
+            else:
+                message.body = (
+                    base64.urlsafe_b64decode(
+                        get_message_result["payload"]["body"]["data"]
+                    )
+                    .decode("utf-8")
+                    .replace("\n", "")
+                )
+        except Exception as e:
+            logging.error(f"ERROR parsing body {e}")
+
         return message
 
     @classmethod
     def run_batch_get_message_detail(
-        cls, sender_emails: str, keywords: str, max_results: int
+        cls,
+        sender_emails: str,
+        keywords: str,
+        max_results: int,
+        fetch_body: bool = False,
     ) -> Iterable[GmailMessage]:
         results = []
         message_ids = GmailGateway.__list_message_ids(
@@ -137,7 +163,7 @@ class GmailGateway:
         )
         with ThreadPoolExecutor(max_workers=20) as pool:
             futures = [
-                pool.submit(GmailGateway.__get_message_detail, message_id)
+                pool.submit(GmailGateway.__get_message_detail, message_id, fetch_body)
                 for message_id in message_ids
             ]
 
@@ -151,6 +177,7 @@ class GmailGateway:
         logging.info(
             f"TOTAL SUCCESSFUL RESULTS {len(results)} for 'run_batch_get_message_detail'"
         )
+
         return results
 
     @classmethod

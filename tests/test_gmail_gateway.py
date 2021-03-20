@@ -13,7 +13,6 @@ class TestGmailGateway(unittest.TestCase):
         message = GmailMessage(
             id="id",
             subject="subject",
-            user_id="me",
             date="Sun, 29 Nov 2020 21:32:07 +0000 (UTC)",
             attachments=list(),
         )

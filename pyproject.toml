@@ -7,8 +7,10 @@ authors = ["Valter Nepomuceno <valter.nep@gmail.com>"]
 [tool.poetry.scripts]
 save_attachments = "gmail_fisher.run:save_attachments_command"
 uber_eats_stats = "gmail_fisher.run:uber_eats_stats_command"
-uber_eats_save_expenses = "gmail_fisher.run:uber_eats_save_expenses_command"
 list_messages = "gmail_fisher.run:list_messages_command"
+export_uber_eats_expenses = "gmail_fisher.run:export_uber_eats_expenses_command"
+export_bolt_food_expenses = "gmail_fisher.run:export_bolt_food_expenses_command"
+export_food_expenses = "gmail_fisher.run:export_food_expenses_command"
 
 [tool.poetry.dependencies]
 python = "^3.9"

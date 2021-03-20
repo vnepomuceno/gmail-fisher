@@ -2,7 +2,7 @@ import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 
 @dataclass
@@ -16,9 +16,9 @@ class MessageAttachment:
 class GmailMessage:
     id: str
     subject: str
-    user_id: str
     date: datetime
     attachments: List[MessageAttachment]
+    body: Optional[str] = None
 
     def get_total_payed_from_subject(self) -> float:
         """
@@ -60,3 +60,38 @@ class GmailMessage:
             return True
         else:
             return False
+
+
+class FoodOrderService:
+    UBER_EATS = "Uber Eats"
+    BOLT_FOOD = "Bolt Food"
+
+
+@dataclass
+class FoodExpense:
+    service: FoodOrderService
+    restaurant: str
+    total: float
+    date: str
+
+
+def expense_date_attribute(expense: FoodExpense):
+    return expense.date
+
+
+@dataclass
+class UberEatsExpense(FoodExpense):
+    def __init__(self, restaurant: str, total: float, date: datetime):
+        self.service = FoodOrderService.UBER_EATS
+        self.restaurant = restaurant
+        self.total = total
+        self.date = date
+
+
+@dataclass
+class BoltFoodExpense(FoodExpense):
+    def __init__(self, restaurant: str, total: float, date: str):
+        self.service = FoodOrderService.BOLT_FOOD
+        self.restaurant = restaurant
+        self.total = total
+        self.date = date
