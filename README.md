@@ -10,10 +10,6 @@ Automation scripts for interacting with Gmail API 🎣
 
 Filters available messages with `KEYWORDS` and from `SENDER_EMAILS` and lists them.
 
-```
-poetry run list_messages --sender-email=<SENDER_EMAIL> --keywords=<KEYWORDS>
-```
-
 Example:
 ```bash
 poetry run list_messages --sender-email='portugal-food@bolt.eu' --keywords='Delivery'
@@ -25,10 +21,6 @@ Filters available messages with `KEYWORDS` and from `SENDER_EMAILS` and lists th
 
 If filtered messages contain attachments, then those will be downloaded
 to an `output` directory and with a formatted name of `PaySlip_YYYY-MM.pdf`.
-
-```
-poetry run save_attachments --sender-email=<SENDER_EMAIL> --keywords=<KEYWORDS>
-```
 
 Example:
 ```bash
@@ -42,26 +34,18 @@ Filters available messages with `KEYWORDS` and from `SENDER_EMAILS` and lists th
 Tailored for UberEats receipts, it draws a bar plot with keys being the month and year in format `YYYY-MM` and
 the values being the total of expenses payed for that month.
 
-```
-poetry run uber_eats_stats --sender-email=<SENDER_EMAILS> --keywords=<KEYWORDS>
-```
-
 Example:
 ```bash
 poetry run uber_eats_stats --sender-email='uber.portugal@uber.com' --keywords='Total'
 ```
 
-### Save UberEats Expenses to Json
+### Export Food Expenses to JSON
 
-Filters available messages with keyword `Total` and from sender email `uber.portugal@uber.com` and lists them.
+Filters available messages with Uber Eats and Bolt Food expenses.
 
-Scraps data from those messages to populate a `UberEatsExpense` objects that will then be serialized to a Json file.
-
-```
-poetry run uber_eats_save_expenses --output-filepath=<OUTPUT_FILEPATH>
-```
+Scraps data from those messages to populate a `FoodExpense` iterable that will then be serialized to a Json file.
 
 Example:
 ```bash
-poetry run uber_eats_save_expenses --output-filepath='./gmail_fisher/output/uber_eats_expenses.json'
+poetry run export_food_expenses --output-filepath='./gmail_fisher/output/food_expenses.json'
 ```
