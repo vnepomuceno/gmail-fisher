@@ -1,33 +1,29 @@
-import datetime
 import unittest
+from typing import Iterable
+from unittest import mock
 
+from gmail_fisher.gmail_gateway import GmailGateway
 from gmail_fisher.models import GmailMessage
-from gmail_fisher.gmail_gateway import FileUtils
 
 
 class TestGmailGateway(unittest.TestCase):
     def test_health_check(self):
         self.assertEqual(True, True)
 
-    def test_get_date_as_datetime(self):
-        message = GmailMessage(
-            id="id",
-            subject="subject",
-            date="Sun, 29 Nov 2020 21:32:07 +0000 (UTC)",
-            attachments=list(),
+    @mock.patch("gmail_fisher.gmail_gateway.Resource")
+    def test_run_batch_get_message_detail(self, client):
+        messages: Iterable[GmailMessage] = GmailGateway.run_batch_get_message_detail(
+            sender_emails="uber.portugal@uber.com",
+            keywords="Total",
+            max_results=50,
+            fetch_body=True,
         )
-        expected = datetime.datetime(2020, 11, 29)
-        result = message.get_date_as_datetime()
-        assert result == expected
-
-    def test_get_payslip_filename(self):
-        subject = (
-            "Please note that the Payslip for the income earned in 8-2020 is attached."
-        )
-        expected = "PaySlip_2020-8.pdf"
-        filename = FileUtils.get_payslip_filename(subject)
-
-        assert filename == expected
+        assert len(messages) == 50
+        for message in messages:
+            self.assertFalse(not message.id)
+            self.assertFalse(not message.date)
+            self.assertFalse(not message.subject)
+            self.assertFalse(not message.body)
 
 
 if __name__ == "__main__":
