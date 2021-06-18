@@ -49,3 +49,14 @@ Example:
 ```bash
 poetry run export_food_expenses --output-filepath='./gmail_fisher/output/food_expenses.json'
 ```
+
+### Export Transportation Expenses to JSON
+
+Filters available messages with Bolt expenses.
+
+Scraps data from those messages to populate a `BoltTransportationExpense` iterable that will then be serialized to a Json file.
+
+Example:
+```bash
+poetry run export_transport_expenses --output-filepath='./gmail_fisher/output/transport_expenses.json'
+```
