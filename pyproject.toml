@@ -11,6 +11,7 @@ list_messages = "gmail_fisher.run:list_messages_command"
 export_uber_eats_expenses = "gmail_fisher.run:export_uber_eats_expenses_command"
 export_bolt_food_expenses = "gmail_fisher.run:export_bolt_food_expenses_command"
 export_food_expenses = "gmail_fisher.run:export_food_expenses_command"
+export_transport_expenses = "gmail_fisher.run:export_transport_expenses_command"
 
 [tool.poetry.dependencies]
 python = "^3.9"

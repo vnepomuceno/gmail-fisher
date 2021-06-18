@@ -4,7 +4,12 @@ import sys
 import click
 
 from gmail_fisher.gmail_gateway import GmailGateway
-from gmail_fisher.parsers import UberEatsParser, BoltFoodParser, FoodExpenseParser
+from gmail_fisher.parsers import (
+    UberEatsParser,
+    BoltFoodParser,
+    FoodExpenseParser,
+    BoltParser,
+)
 from gmail_fisher.save_attachments import gmail_save_attachments
 from gmail_fisher.stats import plot_uber_eats_expenses
 
@@ -67,6 +72,19 @@ def export_food_expenses_command(output_filepath):
 
 
 @click.command()
+@click.option("--output-filepath", help="File path of the output")
+def export_transport_expenses_command(output_filepath):
+    logging.info(
+        f"Running export_transport_expenses with output_filepath='{output_filepath}'"
+    )
+    transport_expenses = list(BoltParser.fetch_expenses())
+    BoltParser.serialize_expenses_to_json_file(
+        expenses=transport_expenses, json_filepath=output_filepath
+    )
+    logging.info(f"TRANSPORT EXPENSES: {transport_expenses}")
+
+
+@click.command()
 @click.option("--sender-email", help="Sender email to filter messages")
 @click.option("--keywords", help="Keywords to filter messages")
 def list_messages_command(sender_email, keywords):
@@ -100,6 +118,12 @@ if __name__ == "__main__":
             expenses=food_expenses, json_filepath=sys.argv[2]
         )
         logging.info("FOOD EXPENSES: " + food_expenses)
+    elif script == "export_transport_expenses":
+        transport_expenses = list(BoltParser.fetch_expenses())
+        BoltParser.serialize_expenses_to_json_file(
+            expenses=transport_expenses, json_filepath=sys.argv[2]
+        )
+        logging.info(f"TRANSPORT EXPENSES: {transport_expenses}")
     elif script == "list_messages":
         GmailGateway.run_batch_get_message_detail(
             sender_emails=sys.argv[2], keywords=sys.argv[3], max_results=1000

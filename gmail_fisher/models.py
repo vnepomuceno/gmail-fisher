@@ -95,3 +95,39 @@ class BoltFoodExpense(FoodExpense):
         self.restaurant = restaurant
         self.total = total
         self.date = date
+
+
+class TransportationService:
+    BOLT = "Bolt"
+
+
+@dataclass
+class TransportationExpense:
+    service: TransportationService
+    distance_km: int
+    from_address: str
+    to_address: str
+    total: float
+    date: str
+
+
+@dataclass
+class BoltTransportationExpense(TransportationExpense):
+    def __init__(
+        self,
+        distance_km: int,
+        from_address: str,
+        to_address: str,
+        total: float,
+        date: str,
+    ):
+        self.service = TransportationService.BOLT
+        self.distance_km = distance_km
+        self.from_address = from_address
+        self.to_address = to_address
+        self.total = total
+        self.date = date
+
+
+def expense_date_attribute_transport(expense: TransportationExpense):
+    return expense.date
