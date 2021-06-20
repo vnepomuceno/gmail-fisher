@@ -4,14 +4,14 @@ import sys
 import click
 
 from gmail_fisher.gmail_gateway import GmailGateway
-from gmail_fisher.parsers import (
+from gmail_fisher.save_attachments import gmail_save_attachments
+from gmail_fisher.stats import plot_uber_eats_expenses
+from gmail_fisher.parsers.food import (
     UberEatsParser,
     BoltFoodParser,
     FoodExpenseParser,
-    BoltParser,
 )
-from gmail_fisher.save_attachments import gmail_save_attachments
-from gmail_fisher.stats import plot_uber_eats_expenses
+from gmail_fisher.parsers.transportation import BoltParser
 
 
 @click.command()

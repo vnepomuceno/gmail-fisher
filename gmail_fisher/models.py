@@ -17,7 +17,7 @@ class GmailMessage:
     id: str
     subject: str
     date: datetime
-    attachments: List[MessageAttachment]
+    attachments: Optional[List[MessageAttachment]] = None
     body: Optional[str] = None
 
     def get_total_payed_from_subject(self) -> float:
@@ -69,9 +69,10 @@ class FoodOrderService:
 
 @dataclass
 class FoodExpense:
+    id: str
     service: FoodOrderService
     restaurant: str
-    total: float
+    total_euros: float
     date: str
 
 
@@ -81,19 +82,21 @@ def expense_date_attribute(expense: FoodExpense):
 
 @dataclass
 class UberEatsExpense(FoodExpense):
-    def __init__(self, restaurant: str, total: float, date: datetime):
+    def __init__(self, id: str, restaurant: str, total: float, date: datetime):
+        self.id = id
         self.service = FoodOrderService.UBER_EATS
         self.restaurant = restaurant
-        self.total = total
+        self.total_euros = total
         self.date = date
 
 
 @dataclass
 class BoltFoodExpense(FoodExpense):
-    def __init__(self, restaurant: str, total: float, date: str):
+    def __init__(self, id: str, restaurant: str, total: float, date: str):
+        self.id = id
         self.service = FoodOrderService.BOLT_FOOD
         self.restaurant = restaurant
-        self.total = total
+        self.total_euros = total
         self.date = date
 
 
@@ -103,11 +106,12 @@ class TransportationService:
 
 @dataclass
 class TransportationExpense:
+    id: str
     service: TransportationService
     distance_km: int
     from_address: str
     to_address: str
-    total: float
+    total_euros: float
     date: str
 
 
@@ -115,17 +119,19 @@ class TransportationExpense:
 class BoltTransportationExpense(TransportationExpense):
     def __init__(
         self,
+        id: str,
         distance_km: int,
         from_address: str,
         to_address: str,
         total: float,
         date: str,
     ):
+        self.id = id
         self.service = TransportationService.BOLT
         self.distance_km = distance_km
         self.from_address = from_address
         self.to_address = to_address
-        self.total = total
+        self.total_euros = total
         self.date = date
 
 

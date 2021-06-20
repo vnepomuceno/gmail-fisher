@@ -13,8 +13,8 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build, Resource
 
-from .models import GmailMessage, MessageAttachment
-from .utils import FileUtils
+from gmail_fisher.models import GmailMessage, MessageAttachment
+from gmail_fisher.utils import FileUtils
 
 
 class GmailClient:

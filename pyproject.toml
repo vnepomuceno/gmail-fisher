@@ -24,6 +24,7 @@ coloredlogs = "^15.0"
 click = "^7.1.2"
 black = "^20.8b1"
 asyncio = "^3.4.3"
+pytest = "^6.2.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.0"
