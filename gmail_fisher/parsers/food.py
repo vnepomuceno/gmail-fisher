@@ -1,7 +1,8 @@
 import json
 import logging
 import re
-from typing import Iterable, Optional
+from abc import ABC, abstractmethod, abstractproperty
+from typing import Iterable, Optional, Final, Dict
 
 from gmail_fisher.gmail_gateway import GmailGateway
 from gmail_fisher.models import (
@@ -13,14 +14,26 @@ from gmail_fisher.models import (
 )
 
 
-class FoodExpenseParser:
-    @classmethod
-    def fetch_expenses(cls) -> Iterable[FoodExpense]:
+class FoodExpenseParser(ABC):
+    @abstractmethod
+    def sender_email(self) -> str:
         pass
 
-    @classmethod
+    @abstractmethod
+    def keywords(self) -> str:
+        pass
+
+    @abstractmethod
+    def restaurant_filters(self) -> Dict[str, str]:
+        pass
+
+    @abstractmethod
+    def fetch_expenses(self) -> Iterable[FoodExpense]:
+        pass
+
+    @staticmethod
     def serialize_expenses_to_json_file(
-        cls, expenses: [FoodExpense], json_filepath: str
+        expenses: [FoodExpense], json_filepath: str
     ) -> str:
         file = open(json_filepath, "w")
         sorted_expenses = sorted(expenses, key=expense_date_attribute, reverse=True)
@@ -33,23 +46,28 @@ class FoodExpenseParser:
 
 
 class BoltFoodParser(FoodExpenseParser):
-    __SENDER_EMAIL = "portugal-food@bolt.eu"
-    __KEYWORDS = "Delivery from Bolt Food"
-    __RESTAURANT_FILTERS = {
-        " - Saldanha Avenida Casal Ribeiro, 50 B , 1000-093 To Praça Aniceto do Rosário, Lisbon 1 Hamburguer X": "",
-        " - Saldanha Av. Miguel Bombarda, 23B": "",
-        " Rua do saco 50, 1150-284 Lisboa To Praça Aniceto do Rosário, Lisbon 1 🎁 2x1": "",
-        " - Av. Roma Avenida de Roma 74 B": "",
-        "&#39;": "'",
-        " Rua Marquês de Fronteira 117F": "",
-    }
+    def sender_email(self) -> str:
+        return "portugal-food@bolt.eu"
+
+    def keywords(self) -> str:
+        return "Delivery from Bolt Food"
+
+    def restaurant_filters(self) -> Dict[str, str]:
+        return {
+            " - Saldanha Avenida Casal Ribeiro, 50 B , 1000-093 To Praça Aniceto do Rosário, Lisbon 1 Hamburguer X": "",
+            " - Saldanha Av. Miguel Bombarda, 23B": "",
+            " Rua do saco 50, 1150-284 Lisboa To Praça Aniceto do Rosário, Lisbon 1 🎁 2x1": "",
+            " - Av. Roma Avenida de Roma 74 B": "",
+            "&#39;": "'",
+            " Rua Marquês de Fronteira 117F": "",
+        }
 
     @classmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
         logging.info("Fetching Bolt Food expenses")
         messages = GmailGateway.run_batch_get_message_detail(
-            sender_emails=cls.__SENDER_EMAIL,
-            keywords=cls.__KEYWORDS,
+            sender_emails=cls.sender_email(),
+            keywords=cls.keywords(),
             max_results=1000,
             fetch_body=True,
         )
@@ -62,7 +80,7 @@ class BoltFoodParser(FoodExpenseParser):
         expenses = []
         for message in gmail_messages:
             try:
-                restaurant = cls.__get_restaurant(message, cls.__RESTAURANT_FILTERS)
+                restaurant = cls.__get_restaurant(message, cls.restaurant_filters(cls))
                 total = cls.__get_total_payed(message)
                 date = cls.__get_date(message)
 
@@ -75,7 +93,7 @@ class BoltFoodParser(FoodExpenseParser):
 
     @staticmethod
     def __get_restaurant(
-        message: GmailMessage, filters: dict[str, str]
+        cls, message: GmailMessage, filters: dict[str, str]
     ) -> Optional[str]:
         if re.search(r"From .* -", message.subject) is not None:
             restaurant = re.search(r"From .* -", message.subject).group()[5:-2]
@@ -89,7 +107,7 @@ class BoltFoodParser(FoodExpenseParser):
                     f"Cannot match restaurant for subject={message.subject}"
                 )
 
-        for exclude_str, replace_str in filters.items():
+        for exclude_str, replace_str in cls.restaurant_filters().items():
             restaurant = restaurant.replace(exclude_str, replace_str)
 
         return restaurant
@@ -114,34 +132,39 @@ class BoltFoodParser(FoodExpenseParser):
 
 
 class UberEatsParser(FoodExpenseParser):
-    __SENDER_EMAIL = "uber.portugal@uber.com"
-    __KEYWORDS = "Total"
-    __RESTAURANT_FILTERS = {
-        "&#39;": "'",
-        "&amp;": "&",
-        "\u00ae": "",
-        " 🐠": "",
-        " (Marquês de Pombal)": "",
-        "® (Saldanha)": "",
-        " (Saldanha)": "",
-        " (General Roçadas)": "",
-        " (Fontes Pereira de Melo)": "",
-        " (São Sebastião)": "",
-        " (Graça)": "",
-        " (Monumental)": "",
-        " (Saldanha Residence)": "",
-        " (República)": "",
-        " (Sta": "",
-        " (Barata Salgueiro)": "",
-        " (Rossio)": "",
-    }
+    def sender_email(self) -> str:
+        return "uber.portugal@uber.com"
+
+    def keywords(self) -> str:
+        return "Total"
+
+    def restaurant_filters(self) -> Dict[str, str]:
+        return {
+            "&#39;": "'",
+            "&amp;": "&",
+            "\u00ae": "",
+            " 🐠": "",
+            " (Marquês de Pombal)": "",
+            "® (Saldanha)": "",
+            " (Saldanha)": "",
+            " (General Roçadas)": "",
+            " (Fontes Pereira de Melo)": "",
+            " (São Sebastião)": "",
+            " (Graça)": "",
+            " (Monumental)": "",
+            " (Saldanha Residence)": "",
+            " (República)": "",
+            " (Sta": "",
+            " (Barata Salgueiro)": "",
+            " (Rossio)": "",
+        }
 
     @classmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
         logging.info("Fetching UberEats food expenses")
         messages = GmailGateway.run_batch_get_message_detail(
-            sender_emails=cls.__SENDER_EMAIL,
-            keywords=cls.__KEYWORDS,
+            sender_emails=cls.sender_email(),
+            keywords=cls.keywords(),
             max_results=1000,
             fetch_body=False,
         )
@@ -154,7 +177,7 @@ class UberEatsParser(FoodExpenseParser):
         expenses = []
         for message in gmail_messages:
             try:
-                restaurant = cls.__get_restaurant(message, cls.__RESTAURANT_FILTERS)
+                restaurant = cls.__get_restaurant(message, cls.restaurant_filters(cls))
                 total = cls.__get_total_payed(message)
                 date = cls.__get_date(message)
 
