@@ -17,3 +17,5 @@ RUN python -m pip install --upgrade pip \
 RUN poetry install
 
 COPY . ${VIRTUAL_ENV}/
+
+CMD ["./export_expenses.sh", "gmail_fisher/output/food_expenses.json", "../finance-police/finance_police/data"]

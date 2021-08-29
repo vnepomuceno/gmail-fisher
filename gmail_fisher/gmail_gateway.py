@@ -4,7 +4,7 @@ import logging
 import os
 import pickle
 from concurrent.futures.thread import ThreadPoolExecutor
-from typing import List, Iterable
+from typing import Iterable, Final
 
 import google_auth_httplib2
 import httplib2
@@ -56,10 +56,14 @@ class GmailClient:
 
 
 class GmailGateway:
+    """Maximum number of workers for thread pool executor"""
+
+    MAX_WORKERS: Final[int] = 20
+
     @classmethod
     def __list_message_ids(
         cls, sender_emails: str, keywords: str, max_results: int
-    ) -> List[str]:
+    ) -> Iterable[str]:
         """
         For a given sender email and comma-separated keywords, retrieve the matching
         message IDs and return them as a list.
@@ -160,7 +164,7 @@ class GmailGateway:
         message_ids = GmailGateway.__list_message_ids(
             sender_emails, keywords, max_results
         )
-        with ThreadPoolExecutor(max_workers=20) as pool:
+        with ThreadPoolExecutor(max_workers=cls.MAX_WORKERS) as pool:
             futures = [
                 pool.submit(GmailGateway.__get_message_detail, message_id, fetch_body)
                 for message_id in message_ids

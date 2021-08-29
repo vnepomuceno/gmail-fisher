@@ -25,7 +25,9 @@ class FoodExpenseParser:
         file = open(json_filepath, "w")
         sorted_expenses = sorted(expenses, key=expense_date_attribute, reverse=True)
         json_expenses = json.dumps(
-            [expense.__dict__ for expense in sorted_expenses], ensure_ascii=False
+            [expense.__dict__ for expense in sorted_expenses],
+            ensure_ascii=False,
+            indent=4,
         )
         file.write(json_expenses)
         file.close()
@@ -42,6 +44,7 @@ class BoltFoodParser(FoodExpenseParser):
         " - Av. Roma Avenida de Roma 74 B": "",
         "&#39;": "'",
         " Rua Marquês de Fronteira 117F": "",
+        ", 1070-292 Lisboa To Praça Aniceto do Rosário, Lisbon 1 × 🎁 2x1": "",
     }
 
     @classmethod
