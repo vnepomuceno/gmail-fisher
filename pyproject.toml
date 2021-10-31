@@ -15,14 +15,14 @@ export_transport_expenses = "gmail_fisher.run:export_transport_expenses_command"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-google-auth = "^1.35.0"
+google-auth = "^2.3.0"
 google-api-python-client = "^2.26.1"
 google-auth-oauthlib = "^0.4.6"
 google = "^3.0.0"
 matplotlib = "^3.3.3"
 coloredlogs = "^15.0"
-click = "^7.1.2"
-black = "^20.8b1"
+click = "^8.0.3"
+black = "^21.9b0"
 asyncio = "^3.4.3"
 pytest = "^6.2.4"
 
