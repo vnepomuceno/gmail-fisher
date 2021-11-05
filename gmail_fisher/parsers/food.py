@@ -1,5 +1,4 @@
 import json
-import logging
 import re
 from typing import Iterable, Optional
 
@@ -11,6 +10,9 @@ from gmail_fisher.models import (
     FoodExpense,
     expense_date_attribute,
 )
+from gmail_fisher.utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class FoodExpenseParser:
@@ -49,7 +51,7 @@ class BoltFoodParser(FoodExpenseParser):
 
     @classmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
-        logging.info("Fetching Bolt Food expenses")
+        logger.info("Fetching Bolt Food expenses")
         messages = GmailGateway.run_batch_get_message_detail(
             sender_emails=cls.__SENDER_EMAIL,
             keywords=cls.__KEYWORDS,
@@ -70,9 +72,9 @@ class BoltFoodParser(FoodExpenseParser):
                 date = cls.__get_date(message)
 
                 expenses.append(BoltFoodExpense(message.id, restaurant, total, date))
-                logging.info(f"RESTAURANT: {restaurant}")
+                logger.info(f"RESTAURANT: {restaurant}")
             except Exception as ex:
-                logging.error(f"ERROR for subject={message.subject}")
+                logger.error(f"ERROR for subject={message.subject}")
 
         return expenses
 
@@ -112,7 +114,7 @@ class BoltFoodParser(FoodExpenseParser):
                 .replace("*", "")
             )
         except Exception as ex:
-            logging.error(f"Raised exception when get Bolt total {ex}")
+            logger.error(f"ERROR when fetching total payed {ex}")
             return None
 
 
@@ -141,7 +143,7 @@ class UberEatsParser(FoodExpenseParser):
 
     @classmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
-        logging.info("Fetching UberEats food expenses")
+        logger.info("Fetching UberEats food expenses")
         messages = GmailGateway.run_batch_get_message_detail(
             sender_emails=cls.__SENDER_EMAIL,
             keywords=cls.__KEYWORDS,
@@ -163,7 +165,7 @@ class UberEatsParser(FoodExpenseParser):
 
                 expenses.append(UberEatsExpense(message.id, restaurant, total, date))
             except IndexError:
-                logging.error(
+                logger.error(
                     f"Error fetching UberEats expense from email message with subject={message.subject}"
                 )
 

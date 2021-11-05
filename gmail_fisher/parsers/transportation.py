@@ -1,5 +1,4 @@
 import json
-import logging
 import re
 from datetime import datetime
 from typing import Iterable, Tuple
@@ -11,6 +10,9 @@ from gmail_fisher.models import (
     BoltTransportationExpense,
     GmailMessage,
 )
+from gmail_fisher.utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class TransportationExpenseParser:
@@ -40,7 +42,7 @@ class BoltParser(TransportationExpenseParser):
 
     @classmethod
     def fetch_expenses(cls) -> Iterable[BoltTransportationExpense]:
-        logging.info("Fetching Bolt transportation expenses")
+        logger.info("Fetching Bolt transportation expenses")
         messages = GmailGateway.run_batch_get_message_detail(
             sender_emails=cls.__SENDER_EMAIL,
             keywords=cls.__KEYWORDS,
@@ -72,7 +74,7 @@ class BoltParser(TransportationExpenseParser):
                     )
                 )
             except IndexError:
-                logging.error(
+                logger.error(
                     f"Error fetching Bolt expense from email message with subject={message.subject}"
                 )
 
@@ -85,7 +87,7 @@ class BoltParser(TransportationExpenseParser):
                 re.search("distance .* km", message.subject).group().split(" ")[1]
             )
         except AttributeError:
-            logging.warning(
+            logger.warning(
                 f"Could not match distance (km) with message_id='{message.id}'"
             )
         return match
@@ -103,7 +105,7 @@ class BoltParser(TransportationExpenseParser):
                 3 : (len(both_addresses.split(":")[2]) - 3)
             ]
         except AttributeError:
-            logging.warning(f"Could not match addresses with message_id='{message.id}'")
+            logger.warning(f"Could not match addresses with message_id='{message.id}'")
             from_address = to_address = ""
         return from_address, to_address
 
@@ -117,7 +119,7 @@ class BoltParser(TransportationExpenseParser):
                 .split("€")[0]
             )
         except AttributeError:
-            logging.warning(
+            logger.warning(
                 f"Could not match total payed (e.g. €12.30) with message_id='{message.id}'"
             )
         return match
@@ -133,6 +135,6 @@ class BoltParser(TransportationExpenseParser):
                 )
             )[:10]
         except Exception as e:
-            logging.warning(f"Could not match date with message_id='{message.id}', {e}")
+            logger.warning(f"Could not match date with message_id='{message.id}', {e}")
             date = ""
         return date

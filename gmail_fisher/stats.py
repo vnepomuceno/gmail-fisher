@@ -1,11 +1,13 @@
 import collections
-import logging
 from typing import List
 
 import matplotlib.pyplot as plt
 
+from .utils import get_logger
 from .gmail_gateway import GmailGateway
 from .models import GmailMessage
+
+logger = get_logger(__name__)
 
 
 def plot_uber_eats_expenses(sender_email, keywords):
@@ -20,7 +22,7 @@ def plot_uber_eats_expenses(sender_email, keywords):
 def get_uber_eats_stats(gmail_messages: List[GmailMessage]) -> dict:
     timeline_payed = dict()
     for message in gmail_messages:
-        logging.info(
+        logger.info(
             f"Processing message with id='{message.id}', subject='{message.subject}'"
         )
 

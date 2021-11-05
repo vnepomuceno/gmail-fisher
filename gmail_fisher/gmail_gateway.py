@@ -1,6 +1,5 @@
 import base64
 import concurrent
-import logging
 import os
 import pickle
 from concurrent.futures.thread import ThreadPoolExecutor
@@ -14,7 +13,9 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build, Resource
 
 from gmail_fisher.models import GmailMessage, MessageAttachment
-from gmail_fisher.utils import FileUtils
+from gmail_fisher.utils import FileUtils, get_logger
+
+logger = get_logger(__name__)
 
 
 class GmailClient:
@@ -81,7 +82,7 @@ class GmailGateway:
         )
 
         if list_message_results["resultSizeEstimate"] == 0:
-            logging.warning(
+            logger.warning(
                 f"No messages found for email='{sender_emails}', keywords='{keywords}'"
             )
             return []
@@ -89,7 +90,7 @@ class GmailGateway:
             message_ids = [
                 message["id"] for message in list_message_results["messages"]
             ]
-            logging.info(f"Found {len(message_ids)} message IDs {message_ids}")
+            logger.info(f"Found {len(message_ids)} message IDs {message_ids}")
             return message_ids
 
     @classmethod
@@ -126,7 +127,7 @@ class GmailGateway:
             )["value"],
             attachments=attachment_list,
         )
-        logging.info(f"Fetched message {message}")
+        logger.debug(f"Fetched message {message}")
 
         if not fetch_body:
             return message
@@ -148,7 +149,7 @@ class GmailGateway:
                     .replace("\n", "")
                 )
         except Exception as e:
-            logging.error(f"ERROR parsing body {e}")
+            logger.error(f"ERROR parsing body {e}")
 
         return message
 
@@ -175,9 +176,9 @@ class GmailGateway:
                     result = future.result()
                     results.append(result)
                 except Exception as ex:
-                    logging.error(f"Error fetching future result {ex}")
+                    logger.error(f"Error fetching future result {ex}")
 
-        logging.info(
+        logger.info(
             f"TOTAL SUCCESSFUL RESULTS {len(results)} for 'run_batch_get_message_detail'"
         )
 
@@ -206,7 +207,7 @@ class GmailGateway:
                         message_id,
                     )
                 except Exception as ex:
-                    logging.error(f"Error fetching future result {ex}")
+                    logger.error(f"Error fetching future result {ex}")
 
     @classmethod
     def __get_message_attachment(cls, message_id: str, attachment_id: str) -> str:
