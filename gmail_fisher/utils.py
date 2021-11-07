@@ -3,6 +3,19 @@ import logging
 import os
 import re
 
+import coloredlogs as coloredlogs
+
+
+def get_logger(name: str) -> logging.Logger:
+    coloredlogs.install()
+    custom_logger = logging.getLogger(name)
+    coloredlogs.install(level="INFO", logger=custom_logger)
+
+    return custom_logger
+
+
+logger = get_logger(__name__)
+
 
 class FileUtils:
     __OUTPUT_DIRECTORY = "gmail_fisher/output/"
@@ -22,6 +35,6 @@ class FileUtils:
         file_handle = open(f"{cls.__OUTPUT_DIRECTORY}{file_name}", "wb")
         file_handle.write(file_data)
         file_handle.close()
-        logging.info(
+        logger.info(
             f"Successfully saved attachment with filename='{file_name}' and message_id='{message_id}'"
         )

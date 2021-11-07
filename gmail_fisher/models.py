@@ -1,8 +1,11 @@
-import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
+
+from gmail_fisher.utils import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -28,7 +31,7 @@ class GmailMessage:
         try:
             match = re.search("[€][1-9]?[0-9].[0-9][0-9]", self.subject).group(0)
         except AttributeError:
-            logging.warning(
+            logger.warning(
                 f"Could not match total payed (e.g. €12.30) with message_id='{self.id}'"
             )
 
@@ -46,7 +49,7 @@ class GmailMessage:
         try:
             return datetime.strptime(date_str, "%d %b %Y")
         except ValueError as ve:
-            logging.warning(
+            logger.warning(
                 f"Date could not be parsed with date='{date_str}', error='{ve}'"
             )
             return datetime.datetime.now()
