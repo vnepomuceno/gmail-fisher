@@ -4,6 +4,16 @@
 
 Automation scripts for interacting with Gmail API 🎣
 
+## Getting Started
+
+Go to https://console.cloud.google.com/apis/credentials and create `Oauth client ID` credentials:
+
+![OAuth 2.0 client credentials](docs/credentials.png)
+
+Under `Actions`, click `Download OAuth client` and then `Download Json`.
+
+Rename downloaded file to `credentials.json` and place it under the `auth` folder. 
+
 ## Run Scripts
 
 ### List Messages

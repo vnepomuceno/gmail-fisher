@@ -1,7 +1,6 @@
 import base64
 import concurrent
 import os
-import pickle
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Iterable, Final
 
@@ -20,8 +19,8 @@ logger = get_logger(__name__)
 
 class GmailClient:
     __SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
-    __CREDENTIALS_FILEPATH = "gmail_fisher/credentials.json"
-    __TOKEN_PICKLE_FILEPATH = "token.pickle"
+    __CREDENTIALS_FILEPATH = "auth/credentials.json"
+    __TOKEN_JSON_FILEPATH = "auth/auth_token.json"
     __instance: Resource = None
 
     @classmethod
@@ -40,9 +39,9 @@ class GmailClient:
     @classmethod
     def __authenticate(cls) -> Credentials:
         credentials = None
-        if os.path.exists(cls.__TOKEN_PICKLE_FILEPATH):
-            with open(cls.__TOKEN_PICKLE_FILEPATH, "rb") as token:
-                credentials = pickle.load(token)
+        if os.path.exists(cls.__TOKEN_JSON_FILEPATH):
+            with open(cls.__TOKEN_JSON_FILEPATH, "rb") as token:
+                credentials = Credentials.from_authorized_user_file(cls.__TOKEN_JSON_FILEPATH, cls.__SCOPES)
         if not credentials or not credentials.valid:
             if credentials and credentials.expired and credentials.refresh_token:
                 credentials.refresh(Request())
@@ -51,8 +50,8 @@ class GmailClient:
                     cls.__CREDENTIALS_FILEPATH, cls.__SCOPES
                 )
                 credentials = flow.run_local_server(port=0)
-            with open(cls.__TOKEN_PICKLE_FILEPATH, "wb") as token:
-                pickle.dump(credentials, token)
+            with open(cls.__TOKEN_JSON_FILEPATH, 'w') as token:
+                token.write(credentials.to_json())
         return credentials
 
 

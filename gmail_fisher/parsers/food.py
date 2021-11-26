@@ -1,5 +1,6 @@
 import json
 import re
+from pathlib import Path
 from typing import Iterable, Optional
 
 from gmail_fisher.gmail_gateway import GmailGateway
@@ -24,6 +25,9 @@ class FoodExpenseParser:
     def serialize_expenses_to_json_file(
         cls, expenses: [FoodExpense], json_filepath: str
     ) -> str:
+        json_filepath = Path(json_filepath)
+        if not json_filepath.parent.exists():
+            json_filepath.parent.mkdir(exist_ok=True)
         file = open(json_filepath, "w")
         sorted_expenses = sorted(expenses, key=expense_date_attribute, reverse=True)
         json_expenses = json.dumps(
