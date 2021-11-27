@@ -41,7 +41,9 @@ class GmailClient:
         credentials = None
         if os.path.exists(cls.__TOKEN_JSON_FILEPATH):
             with open(cls.__TOKEN_JSON_FILEPATH, "rb") as token:
-                credentials = Credentials.from_authorized_user_file(cls.__TOKEN_JSON_FILEPATH, cls.__SCOPES)
+                credentials = Credentials.from_authorized_user_file(
+                    cls.__TOKEN_JSON_FILEPATH, cls.__SCOPES
+                )
         if not credentials or not credentials.valid:
             if credentials and credentials.expired and credentials.refresh_token:
                 credentials.refresh(Request())
@@ -50,7 +52,7 @@ class GmailClient:
                     cls.__CREDENTIALS_FILEPATH, cls.__SCOPES
                 )
                 credentials = flow.run_local_server(port=0)
-            with open(cls.__TOKEN_JSON_FILEPATH, 'w') as token:
+            with open(cls.__TOKEN_JSON_FILEPATH, "w") as token:
                 token.write(credentials.to_json())
         return credentials
 
