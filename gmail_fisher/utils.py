@@ -12,7 +12,7 @@ def get_logger(name: str) -> logging.Logger:
     coloredlogs.install(
         level="INFO",
         logger=custom_logger,
-        fmt="%(asctime)s [%(name)s] <%(levelname)s> %(message)s",
+        fmt="%(asctime)s [%(name)s] (%(threadName)s) <%(levelname)s> %(message)s",
     )
 
     return custom_logger

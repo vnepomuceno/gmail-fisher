@@ -70,6 +70,7 @@ class GmailGateway:
         For a given sender email and comma-separated keywords, retrieve the matching
         message IDs and return them as a list.
         """
+        logger.info(f"Fetching emails with {sender_emails=}, {keywords=}")
         list_message_results = (
             GmailClient.get_instance()
             .users()
@@ -91,7 +92,9 @@ class GmailGateway:
             message_ids = [
                 message["id"] for message in list_message_results["messages"]
             ]
-            logger.info(f"Found {len(message_ids)} message IDs {message_ids}")
+            logger.info(
+                f"Found {len(message_ids)} emails for {sender_emails=}, {keywords=}"
+            )
             return message_ids
 
     @classmethod
@@ -128,7 +131,9 @@ class GmailGateway:
             )["value"],
             attachments=attachment_list,
         )
-        logger.debug(f"Fetched message {message}")
+        logger.info(
+            f"Fetched email details for {message_id=} subject={message.subject[:120]}..."
+        )
 
         if not fetch_body:
             return message
@@ -167,6 +172,7 @@ class GmailGateway:
             sender_emails, keywords, max_results
         )
         with ThreadPoolExecutor(max_workers=cls.MAX_WORKERS) as pool:
+            logger.info(f"Submitting {len(message_ids)} tasks to thread pool")
             futures = [
                 pool.submit(GmailGateway.__get_message_detail, message_id, fetch_body)
                 for message_id in message_ids

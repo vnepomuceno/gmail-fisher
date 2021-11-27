@@ -1,7 +1,10 @@
 import json
 import re
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Iterable, Optional
+
+import html2text as html2text
 
 from gmail_fisher.gmail_gateway import GmailGateway
 from gmail_fisher.models import (
@@ -16,8 +19,9 @@ from gmail_fisher.utils import get_logger
 logger = get_logger(__name__)
 
 
-class FoodExpenseParser:
+class FoodExpenseParser(ABC):
     @classmethod
+    @abstractmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
         pass
 
@@ -37,7 +41,19 @@ class FoodExpenseParser:
         )
         file.write(json_expenses)
         file.close()
+        logger.info(f"Successfully written results to {json_filepath=}")
         return json_expenses
+
+    @classmethod
+    def find_and_replace_string_value(
+        cls, string_value: str, filters: dict[str, str]
+    ) -> str:
+        """
+        Apply filters by finding the filters dict key and replacing it by the dict value
+        """
+        for exclude_str, replace_str in filters.items():
+            string_value = string_value.replace(exclude_str, replace_str)
+        return string_value
 
 
 class BoltFoodParser(FoodExpenseParser):
@@ -51,6 +67,8 @@ class BoltFoodParser(FoodExpenseParser):
         "&#39;": "'",
         " Rua Marquês de Fronteira 117F": "",
         ", 1070-292 Lisboa To Praça Aniceto do Rosário, Lisbon 1 × 🎁 2x1": "",
+        " Av. Da República, 97 B": "",
+        ", 1070": "",
     }
 
     @classmethod
@@ -71,21 +89,21 @@ class BoltFoodParser(FoodExpenseParser):
         expenses = []
         for message in gmail_messages:
             try:
-                restaurant = cls.__get_restaurant(message, cls.__RESTAURANT_FILTERS)
-                total = cls.__get_total_payed(message)
-                date = cls.__get_date(message)
-
-                expenses.append(BoltFoodExpense(message.id, restaurant, total, date))
-                logger.info(f"RESTAURANT: {restaurant}")
+                expense = BoltFoodExpense(
+                    id=message.id,
+                    restaurant=cls.get_restaurant(message),
+                    total=cls.get_total_payed(message=message),
+                    date=cls.get_date(message),
+                )
+                expenses.append(expense)
+                logger.info(f"Parsed bolt food expense {expense=}")
             except Exception as ex:
                 logger.error(f"ERROR for subject={message.subject}")
 
         return expenses
 
-    @staticmethod
-    def __get_restaurant(
-        message: GmailMessage, filters: dict[str, str]
-    ) -> Optional[str]:
+    @classmethod
+    def get_restaurant(cls, message: GmailMessage) -> Optional[str]:
         if re.search(r"From .* -", message.subject) is not None:
             restaurant = re.search(r"From .* -", message.subject).group()[5:-2]
         else:
@@ -98,21 +116,29 @@ class BoltFoodParser(FoodExpenseParser):
                     f"Cannot match restaurant for subject={message.subject}"
                 )
 
-        for exclude_str, replace_str in filters.items():
-            restaurant = restaurant.replace(exclude_str, replace_str)
+        if restaurant.__contains__("-"):
+            restaurant = restaurant.split("-")[0].strip()
 
-        return restaurant
+        return FoodExpenseParser.find_and_replace_string_value(
+            restaurant, cls.__RESTAURANT_FILTERS
+        )
 
     @staticmethod
-    def __get_date(message: GmailMessage) -> str:
+    def get_date(message: GmailMessage) -> str:
         date_arr = message.subject.split(" ")[0].split("-")
         return f"{date_arr[2]}-{date_arr[1]}-{date_arr[0]}"
 
     @staticmethod
-    def __get_total_payed(message: GmailMessage) -> Optional[float]:
+    def get_total_payed(message: GmailMessage) -> Optional[float]:
+        if message.body.__contains__("<html>"):
+            body = html2text.html2text(message.body)
+            body = body.split("**Total charged:**")[1]
+        else:
+            body = message.body
+
         try:
             return float(
-                re.search(r"\*[0-9]*[0-9]+.[0-9][0-9]€\*", message.body)
+                re.search(r"\*[0-9]*[0-9]+.[0-9][0-9]€\*", body)
                 .group(0)
                 .replace("€", "")
                 .replace("*", "")
@@ -163,11 +189,15 @@ class UberEatsParser(FoodExpenseParser):
         expenses = []
         for message in gmail_messages:
             try:
-                restaurant = cls.__get_restaurant(message, cls.__RESTAURANT_FILTERS)
-                total = cls.__get_total_payed(message)
-                date = cls.__get_date(message)
+                expense = UberEatsExpense(
+                    id=message.id,
+                    restaurant=cls.get_restaurant(message, cls.__RESTAURANT_FILTERS),
+                    total=cls.get_total_payed(message),
+                    date=cls.get_date(message),
+                )
 
-                expenses.append(UberEatsExpense(message.id, restaurant, total, date))
+                expenses.append(expense)
+                logger.info(f"Parsed uber eats food expense {expense=}")
             except IndexError:
                 logger.error(
                     f"Error fetching UberEats expense from email message with subject={message.subject}"
@@ -176,19 +206,14 @@ class UberEatsParser(FoodExpenseParser):
         return expenses
 
     @staticmethod
-    def __get_restaurant(
-        message: GmailMessage, filters: dict[str, str]
-    ) -> Optional[str]:
+    def get_restaurant(message: GmailMessage, filters: dict[str, str]) -> Optional[str]:
         restaurant = message.subject.split("receipt for ")[1].split(".")[0]
-        for exclude_str, replace_str in filters.items():
-            restaurant = restaurant.replace(exclude_str, replace_str)
-
-        return restaurant
+        return FoodExpenseParser.find_and_replace_string_value(restaurant, filters)
 
     @staticmethod
-    def __get_total_payed(message: GmailMessage) -> float:
+    def get_total_payed(message: GmailMessage) -> float:
         return float(message.subject.split(" ")[1].replace("€", ""))
 
     @staticmethod
-    def __get_date(message: GmailMessage):
+    def get_date(message: GmailMessage):
         return message.get_date_as_datetime().date().__str__()

@@ -1,4 +1,7 @@
-from gmail_fisher.models import BoltFoodExpense, UberEatsExpense
+import uuid
+from datetime import datetime
+
+from gmail_fisher.models import BoltFoodExpense, UberEatsExpense, GmailMessage
 from gmail_fisher.parsers.food import BoltFoodParser, UberEatsParser
 
 
@@ -36,3 +39,9 @@ def test_parse_uber_eats_expenses_from_messages(uber_eats_messages):
             date="2020-09-19",
         ),
     ]
+
+
+def test_total_payed(bolt_email_html_body):
+    BoltFoodParser.get_total_payed(
+        message=GmailMessage(id="id", subject="", date="", body=bolt_email_html_body)
+    )
