@@ -16,7 +16,16 @@ Rename downloaded file to `credentials.json` and place it under the `auth` folde
 
 ## Run Scripts
 
-### List Messages
+### Run with Docker
+
+```bash
+docker build -t gmail-fisher .
+docker run -v  <HOST_OUTPUT_FILEPATH>:/venv/gmail_fisher/output -i gmail-fisher
+```
+
+### Run with Poetry
+
+#### List Messages
 
 Filters available messages with `KEYWORDS` and from `SENDER_EMAILS` and lists them.
 
@@ -25,7 +34,7 @@ Example:
 poetry run list_messages --sender-email='portugal-food@bolt.eu' --keywords='Delivery'
 ```
 
-### Save Attachments
+#### Save Attachments
 
 Filters available messages with `KEYWORDS` and from `SENDER_EMAILS` and lists them.
 
@@ -37,7 +46,7 @@ Example:
 poetry run save_attachments --sender-email='me@my-company.com|payroll@my-company.com' --keywords='payslip'
 ```
 
-### Plot Expenses
+#### Plot Expenses
 
 Filters available messages with `KEYWORDS` and from `SENDER_EMAILS` and lists them.
 
@@ -49,7 +58,7 @@ Example:
 poetry run uber_eats_stats --sender-email='uber.portugal@uber.com' --keywords='Total'
 ```
 
-### Export Food Expenses to JSON
+#### Export Food Expenses to JSON
 
 Filters available messages with Uber Eats and Bolt Food expenses.
 
@@ -60,7 +69,7 @@ Example:
 poetry run export_food_expenses --output-filepath='./gmail_fisher/output/food_expenses.json'
 ```
 
-### Export Transportation Expenses to JSON
+#### Export Transportation Expenses to JSON
 
 Filters available messages with Bolt expenses.
 

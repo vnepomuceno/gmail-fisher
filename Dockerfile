@@ -10,11 +10,9 @@ COPY ./pyproject.toml ${VIRTUAL_ENV}/
 COPY ./poetry.lock ${VIRTUAL_ENV}/
 
 # Python commands run inside the virtual environment
-RUN python -m pip install --upgrade pip \
-        parse \
-        realpython-reader \
-        poetry
-RUN poetry install
+RUN python -m pip install --no-cache-dir --upgrade pip \
+        poetry==1.1.11 \
+    && poetry install
 
 COPY . ${VIRTUAL_ENV}/
 
