@@ -1,7 +1,6 @@
 .idea
 .DS_Store
-token.pickle
-**/credentials.json
+auth
 **/output
 **/properties.yml
 **/__pycache__
