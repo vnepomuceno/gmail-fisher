@@ -60,7 +60,7 @@ class GmailClient:
 class GmailGateway:
     """Maximum number of workers for thread pool executor"""
 
-    MAX_WORKERS: Final[int] = 20
+    THREAD_POOL_MAX_WORKERS: Final[int] = 200
 
     @classmethod
     def __list_message_ids(
@@ -171,7 +171,7 @@ class GmailGateway:
         message_ids = GmailGateway.__list_message_ids(
             sender_emails, keywords, max_results
         )
-        with ThreadPoolExecutor(max_workers=cls.MAX_WORKERS) as pool:
+        with ThreadPoolExecutor(max_workers=cls.THREAD_POOL_MAX_WORKERS) as pool:
             logger.info(f"Submitting {len(message_ids)} tasks to thread pool")
             futures = [
                 pool.submit(GmailGateway.__get_message_detail, message_id, fetch_body)
@@ -193,7 +193,7 @@ class GmailGateway:
 
     @classmethod
     def run_batch_save_pdf_attachments(cls, messages: Iterable[GmailMessage]):
-        with ThreadPoolExecutor(max_workers=20) as pool:
+        with ThreadPoolExecutor(max_workers=cls.THREAD_POOL_MAX_WORKERS) as pool:
             future_mappings = {}
             for message in messages:
                 for attachment in message.attachments:
