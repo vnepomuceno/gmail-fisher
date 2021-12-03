@@ -1,6 +1,3 @@
-import uuid
-from datetime import datetime
-
 from gmail_fisher.models import BoltFoodExpense, UberEatsExpense, GmailMessage
 from gmail_fisher.parsers.food import BoltFoodParser, UberEatsParser
 

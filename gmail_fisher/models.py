@@ -1,6 +1,7 @@
 import re
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
 from typing import List, Optional
 
 from gmail_fisher.utils import get_logger
@@ -23,21 +24,6 @@ class GmailMessage:
     attachments: Optional[List[MessageAttachment]] = None
     body: Optional[str] = None
 
-    def get_total_payed_from_subject(self) -> float:
-        """
-        Fetches message subject in format e.g. '... €15.40 ...' and returns
-        a float equivalent to the total payed, or 0 if there is not match.
-        """
-        try:
-            match = re.search("[€][1-9]?[0-9].[0-9][0-9]", self.subject).group(0)
-        except AttributeError:
-            logger.warning(
-                f"Could not match total payed (e.g. €12.30) with message_id='{self.id}'"
-            )
-
-            return 0
-        return float(match.strip("€"))
-
     def get_date_as_datetime(self) -> datetime:
         """
         Fetches message date in the format e.g. 'Sun, 29 Nov 2020 21:32:07 +0000 (UTC)',
@@ -53,16 +39,6 @@ class GmailMessage:
                 f"Date could not be parsed with date='{date_str}', error='{ve}'"
             )
             return datetime.datetime.now()
-
-    def ignore_message(self) -> bool:
-        """
-        Fetches message subject and returns True if it contains the word 'Refund' or
-        if there is no total payed matched in that subject, or False otherwise.
-        """
-        if "Refund" in self.subject or self.get_total_payed_from_subject() == 0:
-            return True
-        else:
-            return False
 
 
 class FoodOrderService:
