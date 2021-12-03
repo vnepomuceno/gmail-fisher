@@ -877,8 +877,8 @@ test = ["pytest (>=5.3.5)"]
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.9"
-content-hash = "a092eb2362df9486e0fa6288c4854bebc2739f2d1a590030c83fa29c22ae3601"
+python-versions = "^3.10"
+content-hash = "227231f6f0e7b7c5af5507e7c468201f17dd78fac853f00f61b97efea1a7d710"
 
 [metadata.files]
 anyio = [
