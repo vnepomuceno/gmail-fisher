@@ -2,7 +2,8 @@ import base64
 import concurrent
 import os
 from concurrent.futures.thread import ThreadPoolExecutor
-from typing import Iterable, Final
+from pathlib import Path
+from typing import Iterable, Final, List
 
 import google_auth_httplib2
 import httplib2
@@ -11,6 +12,11 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build, Resource
 
+from gmail_fisher.config import (
+    AUTH_PATH,
+    GMAIL_READ_ONLY_SCOPE,
+    THREAD_POOL_MAX_WORKERS,
+)
 from gmail_fisher.models import GmailMessage, MessageAttachment
 from gmail_fisher.utils import FileUtils, get_logger
 
@@ -18,9 +24,9 @@ logger = get_logger(__name__)
 
 
 class GmailClient:
-    __SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
-    __CREDENTIALS_FILEPATH = "auth/credentials.json"
-    __TOKEN_JSON_FILEPATH = "auth/auth_token.json"
+    scopes: List[str] = [GMAIL_READ_ONLY_SCOPE]
+    credentials_path: Final[Path] = AUTH_PATH / "credentials.json"
+    token_json_path: Final[Path] = AUTH_PATH / "auth_token.json"
     __instance: Resource = None
 
     @classmethod
@@ -39,28 +45,26 @@ class GmailClient:
     @classmethod
     def __authenticate(cls) -> Credentials:
         credentials = None
-        if os.path.exists(cls.__TOKEN_JSON_FILEPATH):
-            with open(cls.__TOKEN_JSON_FILEPATH, "rb") as token:
+        if os.path.exists(cls.token_json_path):
+            with open(cls.token_json_path, "rb") as token:
                 credentials = Credentials.from_authorized_user_file(
-                    cls.__TOKEN_JSON_FILEPATH, cls.__SCOPES
+                    str(cls.token_json_path), cls.scopes
                 )
         if not credentials or not credentials.valid:
             if credentials and credentials.expired and credentials.refresh_token:
                 credentials.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    cls.__CREDENTIALS_FILEPATH, cls.__SCOPES
+                    str(cls.credentials_path), cls.scopes
                 )
                 credentials = flow.run_local_server(port=0)
-            with open(cls.__TOKEN_JSON_FILEPATH, "w") as token:
+            with open(cls.token_json_path, "w") as token:
                 token.write(credentials.to_json())
         return credentials
 
 
 class GmailGateway:
     """Maximum number of workers for thread pool executor"""
-
-    THREAD_POOL_MAX_WORKERS: Final[int] = 200
 
     @classmethod
     def __list_message_ids(
@@ -171,8 +175,8 @@ class GmailGateway:
         message_ids = GmailGateway.__list_message_ids(
             sender_emails, keywords, max_results
         )
-        with ThreadPoolExecutor(max_workers=cls.THREAD_POOL_MAX_WORKERS) as pool:
-            logger.info(f"Submitting {len(message_ids)} tasks to thread pool")
+        with ThreadPoolExecutor(max_workers=THREAD_POOL_MAX_WORKERS) as pool:
+            logger.info(f"Submitting {len(set(message_ids))} tasks to thread pool")
             futures = [
                 pool.submit(GmailGateway.__get_message_detail, message_id, fetch_body)
                 for message_id in message_ids
@@ -193,7 +197,7 @@ class GmailGateway:
 
     @classmethod
     def run_batch_save_pdf_attachments(cls, messages: Iterable[GmailMessage]):
-        with ThreadPoolExecutor(max_workers=cls.THREAD_POOL_MAX_WORKERS) as pool:
+        with ThreadPoolExecutor(max_workers=THREAD_POOL_MAX_WORKERS) as pool:
             future_mappings = {}
             for message in messages:
                 for attachment in message.attachments:

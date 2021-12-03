@@ -2,7 +2,7 @@ import json
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Final, Dict
 
 import html2text as html2text
 
@@ -57,9 +57,9 @@ class FoodExpenseParser(ABC):
 
 
 class BoltFoodParser(FoodExpenseParser):
-    __SENDER_EMAIL = "portugal-food@bolt.eu"
-    __KEYWORDS = "Delivery from Bolt Food"
-    __RESTAURANT_FILTERS = {
+    sender_email: Final[str] = "portugal-food@bolt.eu"
+    keywords: Final[str] = "Delivery from Bolt Food"
+    restaurant_filters: Final[Dict[str, str]] = {
         " - Saldanha Avenida Casal Ribeiro, 50 B , 1000-093 To Praça Aniceto do Rosário, Lisbon 1 Hamburguer X": "",
         " - Saldanha Av. Miguel Bombarda, 23B": "",
         " Rua do saco 50, 1150-284 Lisboa To Praça Aniceto do Rosário, Lisbon 1 🎁 2x1": "",
@@ -75,8 +75,8 @@ class BoltFoodParser(FoodExpenseParser):
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
         logger.info("Fetching Bolt Food expenses")
         messages = GmailGateway.run_batch_get_message_detail(
-            sender_emails=cls.__SENDER_EMAIL,
-            keywords=cls.__KEYWORDS,
+            sender_emails=cls.sender_email,
+            keywords=cls.keywords,
             max_results=1000,
             fetch_body=True,
         )
@@ -120,7 +120,7 @@ class BoltFoodParser(FoodExpenseParser):
             restaurant = restaurant.split("-")[0].strip()
 
         return FoodExpenseParser.find_and_replace_string_value(
-            restaurant, cls.__RESTAURANT_FILTERS
+            restaurant, cls.restaurant_filters
         )
 
     @staticmethod
@@ -149,9 +149,9 @@ class BoltFoodParser(FoodExpenseParser):
 
 
 class UberEatsParser(FoodExpenseParser):
-    __SENDER_EMAIL = "uber.portugal@uber.com"
-    __KEYWORDS = "Total"
-    __RESTAURANT_FILTERS = {
+    sender_email: Final[str] = "uber.portugal@uber.com"
+    keywords: Final[str] = "Total"
+    restaurant_filters: Final[Dict[str, str]] = {
         "&#39;": "'",
         "&amp;": "&",
         "\u00ae": "",
@@ -175,8 +175,8 @@ class UberEatsParser(FoodExpenseParser):
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
         logger.info("Fetching UberEats food expenses")
         messages = GmailGateway.run_batch_get_message_detail(
-            sender_emails=cls.__SENDER_EMAIL,
-            keywords=cls.__KEYWORDS,
+            sender_emails=cls.sender_email,
+            keywords=cls.keywords,
             max_results=1000,
             fetch_body=False,
         )
@@ -191,7 +191,7 @@ class UberEatsParser(FoodExpenseParser):
             try:
                 expense = UberEatsExpense(
                     id=message.id,
-                    restaurant=cls.get_restaurant(message, cls.__RESTAURANT_FILTERS),
+                    restaurant=cls.get_restaurant(message, cls.restaurant_filters),
                     total=cls.get_total_payed(message),
                     date=cls.get_date(message),
                 )

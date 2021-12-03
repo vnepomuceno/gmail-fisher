@@ -1,7 +1,7 @@
 import json
 import re
 from datetime import datetime
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Final
 
 from gmail_fisher.gmail_gateway import GmailGateway
 from gmail_fisher.models import (
@@ -37,15 +37,15 @@ class TransportationExpenseParser:
 
 
 class BoltParser(TransportationExpenseParser):
-    __SENDER_EMAIL = "receipts-portugal@bolt.eu"
-    __KEYWORDS = "Your Bolt Trip On"
+    sender_email: Final[str] = "receipts-portugal@bolt.eu"
+    keywords: Final[str] = "Your Bolt Trip On"
 
     @classmethod
     def fetch_expenses(cls) -> Iterable[BoltTransportationExpense]:
         logger.info("Fetching Bolt transportation expenses")
         messages = GmailGateway.run_batch_get_message_detail(
-            sender_emails=cls.__SENDER_EMAIL,
-            keywords=cls.__KEYWORDS,
+            sender_emails=cls.sender_email,
+            keywords=cls.keywords,
             max_results=1000,
             fetch_body=False,
         )

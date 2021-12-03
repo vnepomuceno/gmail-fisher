@@ -57,7 +57,7 @@ Scraps data from those messages to populate a `FoodExpense` iterable that will t
 
 Example:
 ```bash
-poetry run export_food_expenses --output-filepath='./gmail_fisher/output/food_expenses.json'
+poetry run export_food_expenses --output-filepath='output/food_expenses.json'
 ```
 
 ### Export Transportation Expenses to JSON
@@ -68,5 +68,5 @@ Scraps data from those messages to populate a `BoltTransportationExpense` iterab
 
 Example:
 ```bash
-poetry run export_transport_expenses --output-filepath='./gmail_fisher/output/transport_expenses.json'
+poetry run export_transport_expenses --output-filepath='output/transport_expenses.json'
 ```

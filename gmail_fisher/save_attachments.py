@@ -1,8 +1,4 @@
-from __future__ import print_function
-
-from .gmail_gateway import GmailGateway
-
-OUTPUT_DIRECTORY = "gmail_fisher/output/"
+from gmail_fisher.gmail_gateway import GmailGateway
 
 
 def gmail_save_attachments(sender_email, keywords):
