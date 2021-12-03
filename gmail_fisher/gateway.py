@@ -1,7 +1,5 @@
 import base64
-import concurrent
 import os
-from concurrent.futures.thread import ThreadPoolExecutor
 from pathlib import Path
 from typing import Iterable, Final, List
 
@@ -15,10 +13,9 @@ from googleapiclient.discovery import build, Resource
 from gmail_fisher.config import (
     AUTH_PATH,
     GMAIL_READ_ONLY_SCOPE,
-    THREAD_POOL_MAX_WORKERS,
 )
 from gmail_fisher.models import GmailMessage, MessageAttachment
-from gmail_fisher.utils import FileUtils, get_logger
+from gmail_fisher.utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -67,7 +64,7 @@ class GmailGateway:
     """Maximum number of workers for thread pool executor"""
 
     @classmethod
-    def __list_message_ids(
+    def list_message_ids(
         cls, sender_emails: str, keywords: str, max_results: int
     ) -> Iterable[str]:
         """
@@ -102,7 +99,7 @@ class GmailGateway:
             return message_ids
 
     @classmethod
-    def __get_message_detail(cls, message_id: str, fetch_body: bool) -> GmailMessage:
+    def get_message_detail(cls, message_id: str, fetch_body: bool) -> GmailMessage:
         """
         Fetches the detail of a message with a given message ID.
         """
@@ -164,64 +161,7 @@ class GmailGateway:
         return message
 
     @classmethod
-    def run_batch_get_message_detail(
-        cls,
-        sender_emails: str,
-        keywords: str,
-        max_results: int,
-        fetch_body: bool = False,
-    ) -> Iterable[GmailMessage]:
-        results = []
-        message_ids = GmailGateway.__list_message_ids(
-            sender_emails, keywords, max_results
-        )
-        with ThreadPoolExecutor(max_workers=THREAD_POOL_MAX_WORKERS) as pool:
-            logger.info(f"Submitting {len(set(message_ids))} tasks to thread pool")
-            futures = [
-                pool.submit(GmailGateway.__get_message_detail, message_id, fetch_body)
-                for message_id in message_ids
-            ]
-
-            for future in concurrent.futures.as_completed(futures):
-                try:
-                    result = future.result()
-                    results.append(result)
-                except Exception as ex:
-                    logger.error(f"Error fetching future result {ex}")
-
-        logger.info(
-            f"TOTAL SUCCESSFUL RESULTS {len(results)} for 'run_batch_get_message_detail'"
-        )
-
-        return results
-
-    @classmethod
-    def run_batch_save_pdf_attachments(cls, messages: Iterable[GmailMessage]):
-        with ThreadPoolExecutor(max_workers=THREAD_POOL_MAX_WORKERS) as pool:
-            future_mappings = {}
-            for message in messages:
-                for attachment in message.attachments:
-                    future = pool.submit(
-                        GmailGateway.__get_message_attachment,
-                        message.id,
-                        attachment.id,
-                    )
-                    future_mappings[future] = (message.id, message.subject)
-
-            for future in concurrent.futures.as_completed(future_mappings.keys()):
-                try:
-                    base64_content = future.result()
-                    message_id, message_subject = future_mappings[future]
-                    FileUtils.save_base64_pdf(
-                        base64_content,
-                        FileUtils.get_payslip_filename(message_subject),
-                        message_id,
-                    )
-                except Exception as ex:
-                    logger.error(f"Error fetching future result {ex}")
-
-    @classmethod
-    def __get_message_attachment(cls, message_id: str, attachment_id: str) -> str:
+    def get_message_attachment(cls, message_id: str, attachment_id: str) -> str:
         """
         Returns a base-64 string with the content for the .pdf attachment with 'message_id'
         and 'attachment_id'.

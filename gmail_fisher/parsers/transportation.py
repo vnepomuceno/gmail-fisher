@@ -3,7 +3,8 @@ import re
 from datetime import datetime
 from typing import Iterable, Tuple, Final
 
-from gmail_fisher.gmail_gateway import GmailGateway
+from gmail_fisher import services
+from gmail_fisher.gateway import GmailGateway
 from gmail_fisher.models import (
     TransportationExpense,
     BoltTransportationExpense,
@@ -40,7 +41,7 @@ class BoltParser(TransportationExpenseParser):
     @classmethod
     def fetch_expenses(cls) -> Iterable[BoltTransportationExpense]:
         logger.info("Fetching Bolt transportation expenses")
-        messages = GmailGateway.run_batch_get_message_detail(
+        messages = services.get_email_messages(
             sender_emails=cls.sender_email,
             keywords=cls.keywords,
             max_results=1000,
