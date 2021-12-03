@@ -10,7 +10,6 @@ from gmail_fisher.parsers.food import (
 )
 from gmail_fisher.parsers.transportation import BoltParser
 from gmail_fisher.save_attachments import gmail_save_attachments
-from gmail_fisher.stats import plot_uber_eats_expenses
 from gmail_fisher.utils import get_logger
 
 logger = get_logger(__name__)
@@ -24,16 +23,6 @@ def save_attachments_command(sender_email, keywords):
         f"Running save_attachments with sender_email='{sender_email}', keywords='{keywords}'"
     )
     gmail_save_attachments(sender_email=sender_email, keywords=keywords)
-
-
-@click.command()
-@click.option("--sender-email", help="Sender email to filter messages")
-@click.option("--keywords", help="Keywords to filter messages")
-def uber_eats_stats_command(sender_email, keywords):
-    logger.info(
-        f"Running uber_eats_stats with sender_email='{sender_email}', keywords='{keywords}'"
-    )
-    plot_uber_eats_expenses(sender_email=sender_email, keywords=keywords)
 
 
 @click.command()
@@ -100,8 +89,6 @@ if __name__ == "__main__":
     script = sys.argv[1]
     if script == "save_attachments":
         gmail_save_attachments(sender_email=sys.argv[2], keywords=sys.argv[3])
-    elif script == "uber_eats_stats":
-        plot_uber_eats_expenses(sender_email=sys.argv[2], keywords=sys.argv[3])
     elif script == "export_uber_eats_expenses":
         FoodExpenseParser.serialize_expenses_to_json_file(
             expenses=UberEatsParser.fetch_expenses(), json_filepath=sys.argv[2]

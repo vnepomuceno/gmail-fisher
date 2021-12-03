@@ -37,18 +37,6 @@ Example:
 poetry run save_attachments --sender-email='me@my-company.com|payroll@my-company.com' --keywords='payslip'
 ```
 
-### Plot Expenses
-
-Filters available messages with `KEYWORDS` and from `SENDER_EMAILS` and lists them.
-
-Tailored for UberEats receipts, it draws a bar plot with keys being the month and year in format `YYYY-MM` and
-the values being the total of expenses payed for that month.
-
-Example:
-```bash
-poetry run uber_eats_stats --sender-email='uber.portugal@uber.com' --keywords='Total'
-```
-
 ### Export Food Expenses to JSON
 
 Filters available messages with Uber Eats and Bolt Food expenses.
