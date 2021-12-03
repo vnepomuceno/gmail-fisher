@@ -6,7 +6,6 @@ from typing import Iterable, Tuple, Final
 from gmail_fisher.gmail_gateway import GmailGateway
 from gmail_fisher.models import (
     TransportationExpense,
-    expense_date_attribute_transport,
     BoltTransportationExpense,
     GmailMessage,
 )
@@ -25,9 +24,7 @@ class TransportationExpenseParser:
         cls, expenses: [TransportationExpense], json_filepath: str
     ) -> str:
         file = open(json_filepath, "w")
-        sorted_expenses = sorted(
-            expenses, key=expense_date_attribute_transport, reverse=True
-        )
+        sorted_expenses = sorted(expenses, key=lambda exp: exp.date, reverse=True)
         json_expenses = json.dumps(
             [expense.__dict__ for expense in sorted_expenses], ensure_ascii=False
         )

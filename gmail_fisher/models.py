@@ -1,7 +1,5 @@
-import re
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
 from typing import List, Optional
 
 from gmail_fisher.utils import get_logger
@@ -53,10 +51,6 @@ class FoodExpense:
     restaurant: str
     total_euros: float
     date: str
-
-
-def expense_date_attribute(expense: FoodExpense):
-    return expense.date
 
 
 @dataclass
@@ -112,7 +106,3 @@ class BoltTransportationExpense(TransportationExpense):
         self.to_address = to_address
         self.total_euros = total
         self.date = date
-
-
-def expense_date_attribute_transport(expense: TransportationExpense):
-    return expense.date

@@ -12,7 +12,6 @@ from gmail_fisher.models import (
     UberEatsExpense,
     BoltFoodExpense,
     FoodExpense,
-    expense_date_attribute,
 )
 from gmail_fisher.utils import get_logger
 
@@ -33,7 +32,7 @@ class FoodExpenseParser(ABC):
         if not json_filepath.parent.exists():
             json_filepath.parent.mkdir(exist_ok=True)
         file = open(json_filepath, "w")
-        sorted_expenses = sorted(expenses, key=expense_date_attribute, reverse=True)
+        sorted_expenses = sorted(expenses, key=lambda exp: exp.date, reverse=True)
         json_expenses = json.dumps(
             [expense.__dict__ for expense in sorted_expenses],
             ensure_ascii=False,

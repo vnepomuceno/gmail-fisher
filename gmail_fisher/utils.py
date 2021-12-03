@@ -36,9 +36,8 @@ class FileUtils:
 
         if not os.path.isdir(OUTPUT_PATH):
             os.mkdir(OUTPUT_PATH)
-        file_handle = open(OUTPUT_PATH / file_name, "wb")
+        filepath = OUTPUT_PATH / file_name
+        file_handle = open(filepath, "wb")
         file_handle.write(file_data)
         file_handle.close()
-        logger.info(
-            f"Successfully saved attachment with filename='{file_name}' and message_id='{message_id}'"
-        )
+        logger.info(f"Successfully saved attachment with {filepath=} and {message_id=}")
