@@ -1,12 +1,12 @@
 import json
 import re
 from datetime import datetime
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Final
 
-from gmail_fisher.gmail_gateway import GmailGateway
+from gmail_fisher import services
+from gmail_fisher.gateway import GmailGateway
 from gmail_fisher.models import (
     TransportationExpense,
-    expense_date_attribute_transport,
     BoltTransportationExpense,
     GmailMessage,
 )
@@ -25,9 +25,7 @@ class TransportationExpenseParser:
         cls, expenses: [TransportationExpense], json_filepath: str
     ) -> str:
         file = open(json_filepath, "w")
-        sorted_expenses = sorted(
-            expenses, key=expense_date_attribute_transport, reverse=True
-        )
+        sorted_expenses = sorted(expenses, key=lambda exp: exp.date, reverse=True)
         json_expenses = json.dumps(
             [expense.__dict__ for expense in sorted_expenses], ensure_ascii=False
         )
@@ -37,15 +35,15 @@ class TransportationExpenseParser:
 
 
 class BoltParser(TransportationExpenseParser):
-    __SENDER_EMAIL = "receipts-portugal@bolt.eu"
-    __KEYWORDS = "Your Bolt Trip On"
+    sender_email: Final[str] = "receipts-portugal@bolt.eu"
+    keywords: Final[str] = "Your Bolt Trip On"
 
     @classmethod
     def fetch_expenses(cls) -> Iterable[BoltTransportationExpense]:
         logger.info("Fetching Bolt transportation expenses")
-        messages = GmailGateway.run_batch_get_message_detail(
-            sender_emails=cls.__SENDER_EMAIL,
-            keywords=cls.__KEYWORDS,
+        messages = services.get_email_messages(
+            sender_emails=cls.sender_email,
+            keywords=cls.keywords,
             max_results=1000,
             fetch_body=False,
         )

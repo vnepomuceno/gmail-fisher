@@ -2,17 +2,17 @@ import json
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Final, Dict
 
 import html2text as html2text
 
-from gmail_fisher.gmail_gateway import GmailGateway
+from gmail_fisher import services
+from gmail_fisher.gateway import GmailGateway
 from gmail_fisher.models import (
     GmailMessage,
     UberEatsExpense,
     BoltFoodExpense,
     FoodExpense,
-    expense_date_attribute,
 )
 from gmail_fisher.utils import get_logger
 
@@ -33,7 +33,7 @@ class FoodExpenseParser(ABC):
         if not json_filepath.parent.exists():
             json_filepath.parent.mkdir(exist_ok=True)
         file = open(json_filepath, "w")
-        sorted_expenses = sorted(expenses, key=expense_date_attribute, reverse=True)
+        sorted_expenses = sorted(expenses, key=lambda exp: exp.date, reverse=True)
         json_expenses = json.dumps(
             [expense.__dict__ for expense in sorted_expenses],
             ensure_ascii=False,
@@ -57,9 +57,9 @@ class FoodExpenseParser(ABC):
 
 
 class BoltFoodParser(FoodExpenseParser):
-    __SENDER_EMAIL = "portugal-food@bolt.eu"
-    __KEYWORDS = "Delivery from Bolt Food"
-    __RESTAURANT_FILTERS = {
+    sender_email: Final[str] = "portugal-food@bolt.eu"
+    keywords: Final[str] = "Delivery from Bolt Food"
+    restaurant_filters: Final[Dict[str, str]] = {
         " - Saldanha Avenida Casal Ribeiro, 50 B , 1000-093 To Praça Aniceto do Rosário, Lisbon 1 Hamburguer X": "",
         " - Saldanha Av. Miguel Bombarda, 23B": "",
         " Rua do saco 50, 1150-284 Lisboa To Praça Aniceto do Rosário, Lisbon 1 🎁 2x1": "",
@@ -74,9 +74,9 @@ class BoltFoodParser(FoodExpenseParser):
     @classmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
         logger.info("Fetching Bolt Food expenses")
-        messages = GmailGateway.run_batch_get_message_detail(
-            sender_emails=cls.__SENDER_EMAIL,
-            keywords=cls.__KEYWORDS,
+        messages = services.get_email_messages(
+            sender_emails=cls.sender_email,
+            keywords=cls.keywords,
             max_results=1000,
             fetch_body=True,
         )
@@ -120,7 +120,7 @@ class BoltFoodParser(FoodExpenseParser):
             restaurant = restaurant.split("-")[0].strip()
 
         return FoodExpenseParser.find_and_replace_string_value(
-            restaurant, cls.__RESTAURANT_FILTERS
+            restaurant, cls.restaurant_filters
         )
 
     @staticmethod
@@ -149,9 +149,9 @@ class BoltFoodParser(FoodExpenseParser):
 
 
 class UberEatsParser(FoodExpenseParser):
-    __SENDER_EMAIL = "uber.portugal@uber.com"
-    __KEYWORDS = "Total"
-    __RESTAURANT_FILTERS = {
+    sender_email: Final[str] = "uber.portugal@uber.com"
+    keywords: Final[str] = "Total"
+    restaurant_filters: Final[Dict[str, str]] = {
         "&#39;": "'",
         "&amp;": "&",
         "\u00ae": "",
@@ -174,9 +174,9 @@ class UberEatsParser(FoodExpenseParser):
     @classmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
         logger.info("Fetching UberEats food expenses")
-        messages = GmailGateway.run_batch_get_message_detail(
-            sender_emails=cls.__SENDER_EMAIL,
-            keywords=cls.__KEYWORDS,
+        messages = services.get_email_messages(
+            sender_emails=cls.sender_email,
+            keywords=cls.keywords,
             max_results=1000,
             fetch_body=False,
         )
@@ -191,7 +191,7 @@ class UberEatsParser(FoodExpenseParser):
             try:
                 expense = UberEatsExpense(
                     id=message.id,
-                    restaurant=cls.get_restaurant(message, cls.__RESTAURANT_FILTERS),
+                    restaurant=cls.get_restaurant(message, cls.restaurant_filters),
                     total=cls.get_total_payed(message),
                     date=cls.get_date(message),
                 )
