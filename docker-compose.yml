@@ -7,4 +7,4 @@ services:
 
     tests:
         <<: *BASE
-        command: poetry run pytest -v tests
+        command: bash -c "poetry run black --check . --exclude lib && poetry run pytest -v tests"
