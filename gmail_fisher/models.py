@@ -39,15 +39,16 @@ class GmailMessage:
             return datetime.datetime.now()
 
 
-class FoodOrderService:
+class FoodServiceType:
     UBER_EATS = "Uber Eats"
     BOLT_FOOD = "Bolt Food"
+    ALL = "All"
 
 
 @dataclass
 class FoodExpense:
     id: str
-    service: FoodOrderService
+    service: FoodServiceType
     restaurant: str
     total_euros: float
     date: str
@@ -57,7 +58,7 @@ class FoodExpense:
 class UberEatsExpense(FoodExpense):
     def __init__(self, id: str, restaurant: str, total: float, date: datetime):
         self.id = id
-        self.service = FoodOrderService.UBER_EATS
+        self.service = FoodServiceType.UBER_EATS
         self.restaurant = restaurant
         self.total_euros = total
         self.date = date
@@ -67,20 +68,20 @@ class UberEatsExpense(FoodExpense):
 class BoltFoodExpense(FoodExpense):
     def __init__(self, id: str, restaurant: str, total: float, date: str):
         self.id = id
-        self.service = FoodOrderService.BOLT_FOOD
+        self.service = FoodServiceType.BOLT_FOOD
         self.restaurant = restaurant
         self.total_euros = total
         self.date = date
 
 
-class TransportationService:
+class TransportServiceType:
     BOLT = "Bolt"
 
 
 @dataclass
 class TransportationExpense:
     id: str
-    service: TransportationService
+    service: TransportServiceType
     distance_km: int
     from_address: str
     to_address: str
@@ -100,7 +101,7 @@ class BoltTransportationExpense(TransportationExpense):
         date: str,
     ):
         self.id = id
-        self.service = TransportationService.BOLT
+        self.service = TransportServiceType.BOLT
         self.distance_km = distance_km
         self.from_address = from_address
         self.to_address = to_address

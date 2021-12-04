@@ -1,51 +1,66 @@
-import logging
 import concurrent
+import logging
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Iterable
 
-from gmail_fisher.config import THREAD_POOL_MAX_WORKERS
+from gmail_fisher.config import THREAD_POOL_MAX_WORKERS, LIST_MESSAGES_MAX_RESULTS
 from gmail_fisher.gateway import GmailGateway
-from gmail_fisher.models import GmailMessage
+from gmail_fisher.models import GmailMessage, FoodServiceType, TransportServiceType
+from gmail_fisher.parsers.food import UberEatsParser, FoodExpenseParser, BoltFoodParser
+from gmail_fisher.parsers.transportation import TransportationExpenseParser, BoltParser
 from gmail_fisher.utils import FileUtils
 
 logger = logging.getLogger(__name__)
 
 
-def gmail_save_attachments(sender_email, keywords):
-    messages = get_email_messages(sender_email, keywords, 1000)
-    export_pdf_attachments(messages)
-
-
-def get_email_messages(
-    sender_emails: str,
-    keywords: str,
-    max_results: int,
-    fetch_body: bool = False,
-) -> Iterable[GmailMessage]:
-    results = []
-    message_ids = GmailGateway.list_message_ids(sender_emails, keywords, max_results)
-    with ThreadPoolExecutor(max_workers=THREAD_POOL_MAX_WORKERS) as pool:
-        logger.info(f"Submitting {len(set(message_ids))} tasks to thread pool")
-        futures = [
-            pool.submit(GmailGateway.get_message_detail, message_id, fetch_body)
-            for message_id in message_ids
-        ]
-
-        for future in concurrent.futures.as_completed(futures):
-            try:
-                result = future.result()
-                results.append(result)
-            except Exception as ex:
-                logger.error(f"Error fetching future result {ex}")
-
-    logger.info(
-        f"TOTAL SUCCESSFUL RESULTS {len(results)} for 'run_batch_get_message_detail'"
+def list_email_messages(sender_email: str, keywords: str):
+    logger.info(f"Listing email messages with {sender_email=}, {keywords=}")
+    GmailGateway.get_email_messages(
+        sender_emails=sender_email,
+        keywords=keywords,
+        max_results=LIST_MESSAGES_MAX_RESULTS,
     )
 
-    return results
+
+def export_food_expenses(service_type: FoodServiceType, output_path: str):
+    logger.info(f"Exporting food expenses with {service_type=}, {output_path=}")
+    if service_type is FoodServiceType.UBER_EATS:
+        FoodExpenseParser.serialize_expenses_to_json_file(
+            expenses=UberEatsParser.fetch_expenses(), output_path=output_path
+        )
+    elif service_type is FoodServiceType.BOLT_FOOD:
+        FoodExpenseParser.serialize_expenses_to_json_file(
+            expenses=BoltFoodParser.fetch_expenses(), output_path=output_path
+        )
+    elif service_type is FoodServiceType.ALL:
+        FoodExpenseParser.serialize_expenses_to_json_file(
+            expenses=list(BoltFoodParser.fetch_expenses())
+            + list(UberEatsParser.fetch_expenses()),
+            output_path=output_path,
+        )
+    else:
+        raise RuntimeError(f"Invalid food service type {service_type=}")
 
 
-def export_pdf_attachments(messages: Iterable[GmailMessage]):
+def export_transport_expenses(service_type: TransportServiceType, output_path: str):
+    logger.info(
+        f"Exporting transportation expenses with {service_type=}, {output_path=}"
+    )
+    if service_type is TransportServiceType.BOLT:
+        TransportationExpenseParser.serialize_expenses_to_json_file(
+            expenses=BoltParser.fetch_expenses(), output_path=output_path
+        )
+    else:
+        raise RuntimeError(f"Invalid transport service type {service_type=}")
+
+
+def export_email_attachments(sender_email: str, keywords: str):
+    logger.info(f"Exporting email attachments with {sender_email=}, {keywords=}")
+    messages = GmailGateway.get_email_messages(sender_email, keywords, 1000)
+    __export_pdf_attachments(messages)
+
+
+def __export_pdf_attachments(messages: Iterable[GmailMessage]):
     with ThreadPoolExecutor(max_workers=THREAD_POOL_MAX_WORKERS) as pool:
         future_mappings = {}
         for message in messages:

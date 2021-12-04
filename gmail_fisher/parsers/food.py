@@ -6,7 +6,6 @@ from typing import Iterable, Optional, Final, Dict
 
 import html2text as html2text
 
-from gmail_fisher import services
 from gmail_fisher.gateway import GmailGateway
 from gmail_fisher.models import (
     GmailMessage,
@@ -27,12 +26,13 @@ class FoodExpenseParser(ABC):
 
     @classmethod
     def serialize_expenses_to_json_file(
-        cls, expenses: [FoodExpense], json_filepath: str
+        cls, expenses: [FoodExpense], output_path: str
     ) -> str:
-        json_filepath = Path(json_filepath)
-        if not json_filepath.parent.exists():
-            json_filepath.parent.mkdir(exist_ok=True)
-        file = open(json_filepath, "w")
+        logger.info(f"Exporting food expenses to {output_path=}")
+        output_path = Path(output_path)
+        if not output_path.parent.exists():
+            output_path.parent.mkdir(exist_ok=True)
+        file = open(output_path, "w")
         sorted_expenses = sorted(expenses, key=lambda exp: exp.date, reverse=True)
         json_expenses = json.dumps(
             [expense.__dict__ for expense in sorted_expenses],
@@ -41,7 +41,7 @@ class FoodExpenseParser(ABC):
         )
         file.write(json_expenses)
         file.close()
-        logger.info(f"Successfully written results to {json_filepath=}")
+        logger.info(f"Successfully written results to {output_path=}")
         return json_expenses
 
     @classmethod
@@ -74,7 +74,7 @@ class BoltFoodParser(FoodExpenseParser):
     @classmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
         logger.info("Fetching Bolt Food expenses")
-        messages = services.get_email_messages(
+        messages = GmailGateway.get_email_messages(
             sender_emails=cls.sender_email,
             keywords=cls.keywords,
             max_results=1000,
@@ -174,7 +174,7 @@ class UberEatsParser(FoodExpenseParser):
     @classmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
         logger.info("Fetching UberEats food expenses")
-        messages = services.get_email_messages(
+        messages = GmailGateway.get_email_messages(
             sender_emails=cls.sender_email,
             keywords=cls.keywords,
             max_results=1000,

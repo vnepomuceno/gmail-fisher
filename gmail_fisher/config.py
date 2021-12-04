@@ -7,8 +7,9 @@ LOG_FORMAT: Final[
     str
 ] = "%(asctime)s [%(name)s] (%(threadName)s) <%(levelname)s> %(message)s"
 
-# GMAIL AUTHORIZATION
+# GMAIL GATEWAY
 GMAIL_READ_ONLY_SCOPE: Final[str] = "https://www.googleapis.com/auth/gmail.readonly"
+LIST_MESSAGES_MAX_RESULTS: Final[int] = 1000
 
 # PATHS
 OUTPUT_PATH: Final[Path] = Path("output/")

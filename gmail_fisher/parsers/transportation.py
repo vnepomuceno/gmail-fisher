@@ -3,7 +3,6 @@ import re
 from datetime import datetime
 from typing import Iterable, Tuple, Final
 
-from gmail_fisher import services
 from gmail_fisher.gateway import GmailGateway
 from gmail_fisher.models import (
     TransportationExpense,
@@ -22,9 +21,9 @@ class TransportationExpenseParser:
 
     @classmethod
     def serialize_expenses_to_json_file(
-        cls, expenses: [TransportationExpense], json_filepath: str
+        cls, expenses: [TransportationExpense], output_path: str
     ) -> str:
-        file = open(json_filepath, "w")
+        file = open(output_path, "w")
         sorted_expenses = sorted(expenses, key=lambda exp: exp.date, reverse=True)
         json_expenses = json.dumps(
             [expense.__dict__ for expense in sorted_expenses], ensure_ascii=False
@@ -41,7 +40,7 @@ class BoltParser(TransportationExpenseParser):
     @classmethod
     def fetch_expenses(cls) -> Iterable[BoltTransportationExpense]:
         logger.info("Fetching Bolt transportation expenses")
-        messages = services.get_email_messages(
+        messages = GmailGateway.get_email_messages(
             sender_emails=cls.sender_email,
             keywords=cls.keywords,
             max_results=1000,
