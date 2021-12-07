@@ -5,8 +5,13 @@ from typing import Iterable
 
 from gmail_fisher.config import THREAD_POOL_MAX_WORKERS, LIST_MESSAGES_MAX_RESULTS
 from gmail_fisher.gateway import GmailGateway
-from gmail_fisher.models import GmailMessage, FoodServiceType, TransportServiceType
-from gmail_fisher.parsers.food import UberEatsParser, FoodExpenseParser, BoltFoodParser
+from gmail_fisher.models import (
+    GmailMessage,
+    FoodServiceType,
+    TransportServiceType,
+    sort_as_dict,
+)
+from gmail_fisher.parsers.food import UberEatsParser, BoltFoodParser
 from gmail_fisher.parsers.transportation import TransportationExpenseParser, BoltParser
 from gmail_fisher.utils import FileUtils
 
@@ -25,17 +30,21 @@ def list_email_messages(sender_email: str, keywords: str):
 def export_food_expenses(service_type: FoodServiceType, output_path: str):
     logger.info(f"Exporting food expenses with {service_type=}, {output_path=}")
     if service_type is FoodServiceType.UBER_EATS:
-        FoodExpenseParser.serialize_expenses_to_json_file(
-            expenses=UberEatsParser.fetch_expenses(), output_path=output_path
+        FileUtils.serialize_expenses_to_json_file(
+            expenses=sort_as_dict(UberEatsParser.fetch_expenses()),
+            output_path=output_path,
         )
     elif service_type is FoodServiceType.BOLT_FOOD:
-        FoodExpenseParser.serialize_expenses_to_json_file(
-            expenses=BoltFoodParser.fetch_expenses(), output_path=output_path
+        FileUtils.serialize_expenses_to_json_file(
+            expenses=sort_as_dict(BoltFoodParser.fetch_expenses()),
+            output_path=output_path,
         )
     elif service_type is FoodServiceType.ALL:
-        FoodExpenseParser.serialize_expenses_to_json_file(
-            expenses=list(BoltFoodParser.fetch_expenses())
-            + list(UberEatsParser.fetch_expenses()),
+        FileUtils.serialize_expenses_to_json_file(
+            expenses=sort_as_dict(
+                list(BoltFoodParser.fetch_expenses())
+                + list(UberEatsParser.fetch_expenses())
+            ),
             output_path=output_path,
         )
     else:

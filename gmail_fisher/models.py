@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any, Iterable
 
 from gmail_fisher.utils import get_logger
 
@@ -52,6 +52,15 @@ class FoodExpense:
     restaurant: str
     total_euros: float
     date: str
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "service": self.service,
+            "restaurant": self.restaurant,
+            "total_euros": self.total_euros,
+            "date": self.date,
+        }
 
 
 @dataclass
@@ -107,3 +116,10 @@ class BoltTransportationExpense(TransportationExpense):
         self.to_address = to_address
         self.total_euros = total
         self.date = date
+
+
+def sort_as_dict(expenses: Iterable[FoodExpense]) -> Iterable[Dict[str, Any]]:
+    return [
+        expense.as_dict()
+        for expense in sorted(expenses, key=lambda exp: exp.date, reverse=True)
+    ]

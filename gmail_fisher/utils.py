@@ -1,7 +1,9 @@
 import base64
+import json
 import logging
 import os
 import re
+from pathlib import Path
 
 import coloredlogs as coloredlogs
 
@@ -41,3 +43,20 @@ class FileUtils:
         file_handle.write(file_data)
         file_handle.close()
         logger.info(f"Successfully saved attachment with {filepath=} and {message_id=}")
+
+    @classmethod
+    def serialize_expenses_to_json_file(cls, expenses: [dict], output_path: str) -> str:
+        logger.info(f"Exporting food expenses to {output_path=}")
+        output_path = Path(output_path)
+        if not output_path.parent.exists():
+            output_path.parent.mkdir(exist_ok=True)
+        file = open(output_path, "w")
+        json_expenses = json.dumps(
+            expenses,
+            ensure_ascii=False,
+            indent=4,
+        )
+        file.write(json_expenses)
+        file.close()
+        logger.info(f"Successfully written results to {output_path=}")
+        return json_expenses

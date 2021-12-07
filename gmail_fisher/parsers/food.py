@@ -1,7 +1,5 @@
-import json
 import re
 from abc import ABC, abstractmethod
-from pathlib import Path
 from typing import Iterable, Optional, Final, Dict
 
 import html2text as html2text
@@ -23,26 +21,6 @@ class FoodExpenseParser(ABC):
     @abstractmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
         pass
-
-    @classmethod
-    def serialize_expenses_to_json_file(
-        cls, expenses: [FoodExpense], output_path: str
-    ) -> str:
-        logger.info(f"Exporting food expenses to {output_path=}")
-        output_path = Path(output_path)
-        if not output_path.parent.exists():
-            output_path.parent.mkdir(exist_ok=True)
-        file = open(output_path, "w")
-        sorted_expenses = sorted(expenses, key=lambda exp: exp.date, reverse=True)
-        json_expenses = json.dumps(
-            [expense.__dict__ for expense in sorted_expenses],
-            ensure_ascii=False,
-            indent=4,
-        )
-        file.write(json_expenses)
-        file.close()
-        logger.info(f"Successfully written results to {output_path=}")
-        return json_expenses
 
     @classmethod
     def find_and_replace_string_value(
