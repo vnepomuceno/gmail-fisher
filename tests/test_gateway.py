@@ -1,4 +1,4 @@
-from gmail_fisher.utils import FileUtils
+from gmail_fisher.io import FileUtils
 
 
 def test_get_payslip_filename():

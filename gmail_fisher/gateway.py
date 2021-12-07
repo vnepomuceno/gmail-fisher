@@ -18,7 +18,7 @@ from gmail_fisher.config import (
     THREAD_POOL_MAX_WORKERS,
 )
 from gmail_fisher.models import GmailMessage, MessageAttachment
-from gmail_fisher.utils import get_logger
+from gmail_fisher.io import get_logger
 
 logger = get_logger(__name__)
 

@@ -11,7 +11,7 @@ from gmail_fisher.models import (
     BoltFoodExpense,
     FoodExpense,
 )
-from gmail_fisher.utils import get_logger
+from gmail_fisher.io import get_logger
 
 logger = get_logger(__name__)
 

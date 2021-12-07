@@ -9,7 +9,7 @@ from gmail_fisher.services import (
     export_transport_expenses,
     list_email_messages,
 )
-from gmail_fisher.utils import get_logger
+from gmail_fisher.io import get_logger
 
 logger = get_logger(__name__)
 

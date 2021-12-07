@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional, Dict, Any, Iterable
 
-from gmail_fisher.utils import get_logger
+from gmail_fisher.io import get_logger
 
 logger = get_logger(__name__)
 

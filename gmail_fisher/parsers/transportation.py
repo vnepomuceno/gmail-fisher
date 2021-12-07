@@ -9,7 +9,7 @@ from gmail_fisher.models import (
     BoltTransportationExpense,
     GmailMessage,
 )
-from gmail_fisher.utils import get_logger
+from gmail_fisher.io import get_logger
 
 logger = get_logger(__name__)
 
@@ -18,19 +18,6 @@ class TransportationExpenseParser:
     @classmethod
     def fetch_expenses(cls) -> Iterable[TransportationExpense]:
         pass
-
-    @classmethod
-    def serialize_expenses_to_json_file(
-        cls, expenses: [TransportationExpense], output_path: str
-    ) -> str:
-        file = open(output_path, "w")
-        sorted_expenses = sorted(expenses, key=lambda exp: exp.date, reverse=True)
-        json_expenses = json.dumps(
-            [expense.__dict__ for expense in sorted_expenses], ensure_ascii=False
-        )
-        file.write(json_expenses)
-        file.close()
-        return json_expenses
 
 
 class BoltParser(TransportationExpenseParser):

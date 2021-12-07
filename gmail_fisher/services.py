@@ -5,6 +5,11 @@ from typing import Iterable
 
 from gmail_fisher.config import THREAD_POOL_MAX_WORKERS, LIST_MESSAGES_MAX_RESULTS
 from gmail_fisher.gateway import GmailGateway
+from gmail_fisher.io import (
+    serialize_expenses_to_json_file,
+    save_base64_pdf,
+    get_payslip_filename,
+)
 from gmail_fisher.models import (
     GmailMessage,
     FoodServiceType,
@@ -12,8 +17,7 @@ from gmail_fisher.models import (
     sort_as_dict,
 )
 from gmail_fisher.parsers.food import UberEatsParser, BoltFoodParser
-from gmail_fisher.parsers.transportation import TransportationExpenseParser, BoltParser
-from gmail_fisher.utils import FileUtils
+from gmail_fisher.parsers.transportation import BoltParser
 
 logger = logging.getLogger(__name__)
 
@@ -30,17 +34,17 @@ def list_email_messages(sender_email: str, keywords: str):
 def export_food_expenses(service_type: FoodServiceType, output_path: str):
     logger.info(f"Exporting food expenses with {service_type=}, {output_path=}")
     if service_type is FoodServiceType.UBER_EATS:
-        FileUtils.serialize_expenses_to_json_file(
+        serialize_expenses_to_json_file(
             expenses=sort_as_dict(UberEatsParser.fetch_expenses()),
             output_path=output_path,
         )
     elif service_type is FoodServiceType.BOLT_FOOD:
-        FileUtils.serialize_expenses_to_json_file(
+        serialize_expenses_to_json_file(
             expenses=sort_as_dict(BoltFoodParser.fetch_expenses()),
             output_path=output_path,
         )
     elif service_type is FoodServiceType.ALL:
-        FileUtils.serialize_expenses_to_json_file(
+        serialize_expenses_to_json_file(
             expenses=sort_as_dict(
                 list(BoltFoodParser.fetch_expenses())
                 + list(UberEatsParser.fetch_expenses())
@@ -56,7 +60,7 @@ def export_transport_expenses(service_type: TransportServiceType, output_path: s
         f"Exporting transportation expenses with {service_type=}, {output_path=}"
     )
     if service_type is TransportServiceType.BOLT:
-        TransportationExpenseParser.serialize_expenses_to_json_file(
+        serialize_expenses_to_json_file(
             expenses=BoltParser.fetch_expenses(), output_path=output_path
         )
     else:
@@ -85,9 +89,9 @@ def __export_pdf_attachments(messages: Iterable[GmailMessage]):
             try:
                 base64_content = future.result()
                 message_id, message_subject = future_mappings[future]
-                FileUtils.save_base64_pdf(
+                save_base64_pdf(
                     base64_content,
-                    FileUtils.get_payslip_filename(message_subject),
+                    get_payslip_filename(message_subject),
                     message_id,
                 )
             except Exception as ex:
