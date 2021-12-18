@@ -5,7 +5,12 @@ from typing import Iterable
 
 from gmail_fisher.config import THREAD_POOL_MAX_WORKERS, LIST_MESSAGES_MAX_RESULTS
 from gmail_fisher.gateway import GmailGateway
-from gmail_fisher.models import GmailMessage, FoodServiceType, TransportServiceType
+from gmail_fisher.models import (
+    GmailMessage,
+    FoodServiceType,
+    TransportServiceType,
+    FoodExpense,
+)
 from gmail_fisher.parsers.food import UberEatsParser, FoodExpenseParser, BoltFoodParser
 from gmail_fisher.parsers.transportation import TransportationExpenseParser, BoltParser
 from gmail_fisher.utils import FileUtils
@@ -20,6 +25,10 @@ def list_email_messages(sender_email: str, keywords: str):
         keywords=keywords,
         max_results=LIST_MESSAGES_MAX_RESULTS,
     )
+
+
+def get_food_expenses() -> Iterable[FoodExpense]:
+    return list(BoltFoodParser.fetch_expenses()) + list(UberEatsParser.fetch_expenses())
 
 
 def export_food_expenses(service_type: FoodServiceType, output_path: str):
