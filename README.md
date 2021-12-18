@@ -14,6 +14,20 @@ Under `Actions`, click `Download OAuth client` and then `Download Json`.
 
 Rename downloaded file to `credentials.json` and place it under the `auth` folder. 
 
+## Run Server
+
+Start REST server by running the command:
+
+```bash
+poetry run uvicorn gmail_fisher.main:app --reload
+```
+
+Then make a `GET` request to `/expenses/food`:
+
+```bash
+http GET localhost:8000/expenses/food
+```
+
 ## Run Scripts
 
 ### List Messages
