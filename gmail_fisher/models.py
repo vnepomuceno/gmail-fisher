@@ -55,6 +55,32 @@ class FoodExpense:
 
 
 @dataclass
+class BankExpense:
+    def __init__(self, id: str, description: str, total_euros: str, date: str):
+        self.id = id
+        self.description = description
+        self.total_euros = total_euros.replace("-", "")
+        self.date = date
+        self.transaction_type = self.get_transaction_type(total_euros)
+        self.category = self.get_category(description)
+
+    @staticmethod
+    def get_transaction_type(total_euros: str):
+        return "debit" if total_euros.__contains__("-") else "credit"
+
+    @staticmethod
+    def get_category(description: str):
+        if description.__contains__("ACTIVPAYROLL"):
+            return "salary"
+        elif description.__contains__("CUF"):
+            return "health"
+        elif description.__contains__("AUCHAN"):
+            return "supermarket"
+        else:
+            return "unknown"
+
+
+@dataclass
 class UberEatsExpense(FoodExpense):
     def __init__(self, id: str, restaurant: str, total: float, date: datetime):
         self.id = id
