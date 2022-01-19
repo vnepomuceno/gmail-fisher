@@ -15,7 +15,7 @@ export_transport_expenses = "gmail_fisher.run:export_transport_expenses_command"
 [tool.poetry.dependencies]
 python = "^3.9"
 google-auth = "^2.3.0"
-google-api-python-client = "^2.33.0"
+google-api-python-client = "^2.36.0"
 google-auth-oauthlib = "^0.4.6"
 google = "^3.0.0"
 matplotlib = "^3.3.3"
