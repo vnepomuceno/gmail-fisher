@@ -27,6 +27,8 @@ pytest = "^6.2.4"
 html2text = "^2020.1.16"
 fastapi = "^0.70.1"
 uvicorn = "^0.16.0"
+boto3 = "^1.21.13"
+python-dotenv = "^0.19.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.0"

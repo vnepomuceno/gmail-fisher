@@ -4,3 +4,4 @@ auth
 **/output
 **/properties.yml
 **/__pycache__
+.env

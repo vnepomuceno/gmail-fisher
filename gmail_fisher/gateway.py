@@ -127,7 +127,7 @@ class GmailGateway:
                 except Exception as ex:
                     logger.error(f"Error fetching future result {ex}")
 
-        logger.info(
+        logger.success(
             f"TOTAL SUCCESSFUL RESULTS {len(results)} for 'run_batch_get_message_detail'"
         )
 
@@ -167,7 +167,7 @@ class GmailGateway:
             )["value"],
             attachments=attachment_list,
         )
-        logger.info(
+        logger.success(
             f"Fetched email details for {message_id=} subject={message.subject[:120]}..."
         )
 
