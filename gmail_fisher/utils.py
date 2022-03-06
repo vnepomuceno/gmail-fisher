@@ -11,6 +11,13 @@ from gmail_fisher.config import OUTPUT_PATH, LOG_FORMAT, LOG_LEVEL
 def get_logger(name: str) -> logging.Logger:
     coloredlogs.install()
     custom_logger = logging.getLogger(name)
+    logging.SUCCESS = 25  # between WARNING and INFO
+    logging.addLevelName(logging.SUCCESS, "SUCCESS")
+    setattr(
+        custom_logger,
+        "success",
+        lambda message, *args: custom_logger._log(logging.SUCCESS, message, args),
+    )
     coloredlogs.install(
         level=LOG_LEVEL,
         logger=custom_logger,
@@ -40,4 +47,6 @@ class FileUtils:
         file_handle = open(filepath, "wb")
         file_handle.write(file_data)
         file_handle.close()
-        logger.info(f"Successfully saved attachment with {filepath=} and {message_id=}")
+        logger.success(
+            f"Successfully saved attachment with {filepath=} and {message_id=}"
+        )

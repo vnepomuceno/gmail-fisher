@@ -41,7 +41,7 @@ class FoodExpenseParser(ABC):
         )
         file.write(json_expenses)
         file.close()
-        logger.info(f"Successfully written results to {output_path=}")
+        logger.success(f"Successfully written results to {output_path=}")
         return json_expenses
 
     @classmethod

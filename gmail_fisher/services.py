@@ -13,6 +13,7 @@ from gmail_fisher.models import (
 )
 from gmail_fisher.parsers.food import UberEatsParser, FoodExpenseParser, BoltFoodParser
 from gmail_fisher.parsers.transportation import TransportationExpenseParser, BoltParser
+from gmail_fisher.s3_uploader import S3BucketUploader
 from gmail_fisher.utils import FileUtils
 
 logger = logging.getLogger(__name__)
@@ -31,8 +32,11 @@ def get_food_expenses() -> Iterable[FoodExpense]:
     return list(BoltFoodParser.fetch_expenses()) + list(UberEatsParser.fetch_expenses())
 
 
-def export_food_expenses(service_type: FoodServiceType, output_path: str):
+def export_food_expenses(
+    service_type: FoodServiceType, output_path: str, upload_s3: bool = False
+):
     logger.info(f"Exporting food expenses with {service_type=}, {output_path=}")
+
     if service_type is FoodServiceType.UBER_EATS:
         FoodExpenseParser.serialize_expenses_to_json_file(
             expenses=UberEatsParser.fetch_expenses(), output_path=output_path
@@ -49,6 +53,9 @@ def export_food_expenses(service_type: FoodServiceType, output_path: str):
         )
     else:
         raise RuntimeError(f"Invalid food service type {service_type=}")
+
+    if upload_s3:
+        S3BucketUploader().upload(filepath=output_path, key=output_path.split("/")[-1])
 
 
 def export_transport_expenses(service_type: TransportServiceType, output_path: str):
