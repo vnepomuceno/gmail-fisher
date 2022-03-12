@@ -13,6 +13,7 @@ LIST_MESSAGES_MAX_RESULTS: Final[int] = 1000
 
 # PATHS
 OUTPUT_PATH: Final[Path] = Path("output/")
+TEMP_PATH: Final[Path] = Path("temp/")
 AUTH_PATH: Final[Path] = Path("auth/")
 
 # CONCURRENCY

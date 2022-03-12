@@ -2,10 +2,11 @@ import base64
 import logging
 import os
 import re
+from pathlib import Path
 
 import coloredlogs as coloredlogs
 
-from gmail_fisher.config import OUTPUT_PATH, LOG_FORMAT, LOG_LEVEL
+from gmail_fisher.config import LOG_FORMAT, LOG_LEVEL
 
 
 def get_logger(name: str) -> logging.Logger:
@@ -38,15 +39,14 @@ class FileUtils:
         return f"PaySlip_{date}.pdf"
 
     @classmethod
-    def save_base64_pdf(cls, base64_string: str, file_name: str, message_id: str):
+    def save_base64_pdf(cls, base64_string: str, file_path: Path, message_id: str):
         file_data = base64.urlsafe_b64decode(base64_string.encode("UTF-8"))
 
-        if not os.path.isdir(OUTPUT_PATH):
-            os.mkdir(OUTPUT_PATH)
-        filepath = OUTPUT_PATH / file_name
-        file_handle = open(filepath, "wb")
+        if not os.path.isdir(file_path.parent):
+            os.mkdir(file_path.parent)
+        file_handle = open(file_path, "wb")
         file_handle.write(file_data)
         file_handle.close()
         logger.success(
-            f"Successfully saved attachment with {filepath=} and {message_id=}"
+            f"Successfully saved attachment with {file_path=} and {message_id=}"
         )

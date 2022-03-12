@@ -147,6 +147,7 @@ class GmailGateway:
         )
 
         attachment_list = list()
+        attachment = None
         if get_message_result["payload"].keys().__contains__("parts"):
             for part in get_message_result["payload"]["parts"]:
                 if part["mimeType"] in ["application/pdf", "application/octet-stream"]:
@@ -155,6 +156,15 @@ class GmailGateway:
                         filename=part["filename"],
                         id=part["body"]["attachmentId"],
                     )
+                elif part["mimeType"] in ["multipart/mixed"]:
+                    for subpart in part["parts"]:
+                        if subpart["mimeType"].__contains__("pdf"):
+                            attachment = MessageAttachment(
+                                part_id=subpart["partId"],
+                                filename=subpart["filename"],
+                                id=subpart["body"]["attachmentId"],
+                            )
+                if attachment:
                     attachment_list.append(attachment)
 
         message = GmailMessage(

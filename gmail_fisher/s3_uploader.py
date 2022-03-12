@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import boto3
 from botocore.exceptions import NoCredentialsError
@@ -22,12 +23,12 @@ class S3BucketUploader:
         logger.info(f"S3 client created for ACCESS_KEY='{access_key}'")
         logger.info(f"S3 bucket name is '{self.bucket_name}'")
 
-    def upload(self, filepath: str, key: str):
+    def upload(self, filepath: Path, key: str):
         try:
             logger.info(
                 f"Uploading {filepath=} to bucket='{self.bucket_name}' with {key=}..."
             )
-            self.s3_client.upload_file(filepath, self.bucket_name, key)
+            self.s3_client.upload_file(str(filepath), self.bucket_name, key)
         except FileNotFoundError as fnfe:
             logger.error(
                 f"File was not found for {filepath=}, exception='{fnfe.__class__.__name__}', message='{fnfe}'"
