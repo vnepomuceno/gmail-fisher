@@ -657,11 +657,11 @@ python-versions = "*"
 
 [[package]]
 name = "pytest"
-version = "7.0.1"
+version = "7.1.0"
 description = "pytest: simple powerful testing with Python"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 atomicwrites = {version = ">=1.0", markers = "sys_platform == \"win32\""}
@@ -878,7 +878,7 @@ test = ["pytest (>=5.3.5)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "e772be7101d09c2a5b34b12990892be6eff6b2f77d625e7950884723f6b79739"
+content-hash = "3bff703635f3e55a9cee04ed65a92a086b51123d9d173217a8ad81486108dceb"
 
 [metadata.files]
 anyio = [
@@ -1374,8 +1374,8 @@ pyreadline3 = [
     {file = "pyreadline3-3.4.1.tar.gz", hash = "sha256:6f3d1f7b8a31ba32b73917cefc1f28cc660562f39aea8646d30bd6eff21f7bae"},
 ]
 pytest = [
-    {file = "pytest-7.0.1-py3-none-any.whl", hash = "sha256:9ce3ff477af913ecf6321fe337b93a2c0dcf2a0a1439c43f5452112c1e4280db"},
-    {file = "pytest-7.0.1.tar.gz", hash = "sha256:e30905a0c131d3d94b89624a1cc5afec3e0ba2fbdb151867d8e0ebd49850f171"},
+    {file = "pytest-7.1.0-py3-none-any.whl", hash = "sha256:b555252a95bbb2a37a97b5ac2eb050c436f7989993565f5e0c9128fcaacadd0e"},
+    {file = "pytest-7.1.0.tar.gz", hash = "sha256:f1089d218cfcc63a212c42896f1b7fbf096874d045e1988186861a1a87d27b47"},
 ]
 python-dateutil = [
     {file = "python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},
