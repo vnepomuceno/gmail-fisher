@@ -11,6 +11,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build, Resource
+from rich.progress import Progress
 
 from gmail_fisher.config import (
     AUTH_PATH,
@@ -113,19 +114,20 @@ class GmailGateway:
         message_ids = GmailGateway.list_message_ids(
             sender_emails, keywords, max_results
         )
-        with ThreadPoolExecutor(max_workers=THREAD_POOL_MAX_WORKERS) as pool:
-            logger.info(f"Submitting {len(set(message_ids))} tasks to thread pool")
-            futures = [
-                pool.submit(GmailGateway.get_message_detail, message_id, fetch_body)
-                for message_id in message_ids
-            ]
+        with Progress() as progress:
+            with ThreadPoolExecutor(max_workers=THREAD_POOL_MAX_WORKERS) as pool:
+                logger.info(f"Submitting {len(set(message_ids))} tasks to thread pool")
+                futures = [
+                    pool.submit(GmailGateway.get_message_detail, message_id, fetch_body)
+                    for message_id in message_ids
+                ]
 
-            for future in concurrent.futures.as_completed(futures):
-                try:
-                    result = future.result()
-                    results.append(result)
-                except Exception as ex:
-                    logger.error(f"Error fetching future result {ex}")
+                for future in concurrent.futures.as_completed(futures):
+                    try:
+                        result = future.result()
+                        results.append(result)
+                    except Exception as ex:
+                        logger.error(f"Error fetching future result {ex}")
 
         logger.success(
             f"TOTAL SUCCESSFUL RESULTS {len(results)} for 'run_batch_get_message_detail'"
