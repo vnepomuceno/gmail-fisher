@@ -14,7 +14,7 @@ export_bank_expenses = "gmail_fisher.run:export_bank_expenses_command"
 export_transport_expenses = "gmail_fisher.run:export_transport_expenses_command"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 google-auth = "^2.3.0"
 google-api-python-client = "^2.39.0"
 google-auth-oauthlib = "^0.5.0"
