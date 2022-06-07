@@ -1,4 +1,4 @@
-FROM python:3.10.4-bullseye
+FROM python:3.10.0-slim
 
 # Set up and activate virtual environment
 ENV VIRTUAL_ENV "/venv"
@@ -10,12 +10,12 @@ COPY ./pyproject.toml ${VIRTUAL_ENV}/
 COPY ./poetry.lock ${VIRTUAL_ENV}/
 
 # Python commands run inside the virtual environment
-RUN python -m pip install --no-cache-dir --upgrade pip==22.1.2 \
-        parse==1.19.0 \
-        realpython-reader==1.1.1 \
-        poetry==1.1.13 \
-    && poetry install
+RUN python -m pip install --upgrade pip \
+        parse \
+        realpython-reader \
+        poetry
+RUN poetry install
 
 COPY . ${VIRTUAL_ENV}/
 
-CMD ["poetry", "run", "export_food_expenses", "--output-filepath='output/food_expenses.json'"]
+CMD ["./export_expenses.sh", "output/food_expenses.json", "../finance-police/finance_police/data"]
