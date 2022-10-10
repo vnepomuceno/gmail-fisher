@@ -69,6 +69,7 @@ class BoltFoodParser(FoodExpenseParser):
         ", 1070-292 Lisboa To Praça Aniceto do Rosário, Lisbon 1 × 🎁 2x1": "",
         " Av. Da República, 97 B": "",
         ", 1070": "",
+        " Praça do Chile 8 Lisboa 1000": "",
     }
 
     @classmethod
