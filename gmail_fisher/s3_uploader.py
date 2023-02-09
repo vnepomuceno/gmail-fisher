@@ -44,4 +44,4 @@ class S3BucketUploader:
 
 
 if __name__ == "__main__":
-    S3BucketUploader().upload(filepath="export_expenses.sh", key="export_expenses.sh")
+    S3BucketUploader().upload(filepath=Path("export_expenses.sh"), key="export_expenses.sh")

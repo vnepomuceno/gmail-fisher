@@ -1,4 +1,4 @@
-FROM python:3.10.4-bullseye
+FROM python:3.11.1-bullseye
 
 # Set up and activate virtual environment
 ENV VIRTUAL_ENV "/venv"
@@ -14,6 +14,7 @@ RUN python -m pip install --no-cache-dir --upgrade pip==22.1.2 \
         parse==1.19.0 \
         realpython-reader==1.1.1 \
         poetry==1.1.13 \
+    && pip install --upgrade pip \
     && poetry install
 
 COPY . ${VIRTUAL_ENV}/
