@@ -90,6 +90,7 @@ class BoltFoodParser(FoodExpenseParser):
         cls, gmail_messages: Iterable[GmailMessage]
     ) -> Iterable[BoltFoodExpense]:
         expenses = []
+        warnings = []
         num_messages = len(list(gmail_messages))
         logger.info(
             f"⏳  Mapping {num_messages} email messages to Bolt Food expenses..."
@@ -106,9 +107,16 @@ class BoltFoodParser(FoodExpenseParser):
                     expenses.append(expense)
                     bar()
                 except Exception as ex:
-                    logger.warning(
+                    warnings.append(
                         f"Could not map food expense with subject={message.subject}, error={ex}"
                     )
+
+        if len(warnings) > 0:
+            logger.warning(
+                f"⚠️  Incomplete expense attributes for {len(warnings)} messages"
+            )
+            for warn in warnings:
+                logger.debug(warn)
 
         logger.success(f"Successfully mapped {len(expenses)} Bolt Food expenses")
         return expenses
@@ -199,6 +207,7 @@ class UberEatsParser(FoodExpenseParser):
         cls, gmail_messages: Iterable[GmailMessage]
     ) -> Iterable[UberEatsExpense]:
         expenses = []
+        warnings = []
         num_messages = len(list(gmail_messages))
         with alive_bar(num_messages) as bar:
             for message in gmail_messages:
@@ -213,9 +222,16 @@ class UberEatsParser(FoodExpenseParser):
                     expenses.append(expense)
                     bar()
                 except IndexError:
-                    logger.warning(
+                    warnings.append(
                         f"Could not map food expense with subject='{message.subject}'"
                     )
+
+        if len(warnings) > 0:
+            logger.warning(
+                f"⚠️  Incomplete expense attributes for {len(warnings)} messages"
+            )
+            for warn in warnings:
+                logger.debug(warn)
 
         return expenses
 

@@ -14,6 +14,7 @@ class MessageAttachment:
     id: str
 
 
+# TODO Add sender_email as attribute
 @dataclass
 class GmailMessage:
     id: str
