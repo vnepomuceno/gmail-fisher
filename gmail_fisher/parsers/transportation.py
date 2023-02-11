@@ -3,6 +3,8 @@ import re
 from datetime import datetime
 from typing import Iterable, Tuple, Final
 
+from alive_progress import alive_bar
+
 from gmail_fisher.gateway import GmailGateway
 from gmail_fisher.models import (
     TransportationExpense,
@@ -53,32 +55,32 @@ class BoltParser(TransportationExpenseParser):
         cls, gmail_messages: Iterable[GmailMessage]
     ) -> Iterable[BoltTransportationExpense]:
         expenses = []
-        for message in gmail_messages:
-            try:
-                distance_km: int = cls.__get_distance_km(message)
-                from_address, to_address = cls.__get_addresses(message)
-                total = cls.__get_total_payed(message)
-                date = cls.__get_date(message)
-
-                expenses.append(
-                    BoltTransportationExpense(
-                        id=message.id,
-                        distance_km=distance_km,
-                        from_address=from_address,
-                        to_address=to_address,
-                        total=total,
-                        date=date,
+        num_messages = len(list(gmail_messages))
+        with alive_bar(num_messages) as bar:
+            for message in gmail_messages:
+                try:
+                    from_address, to_address = cls.__get_addresses(message)
+                    expenses.append(
+                        BoltTransportationExpense(
+                            id=message.id,
+                            distance_km=cls.__get_distance_km(message),
+                            from_address=from_address,
+                            to_address=to_address,
+                            total=cls.__get_total_payed(message),
+                            date=cls.__get_date(message),
+                        )
                     )
-                )
-            except IndexError:
-                logger.error(
-                    f"Error fetching Bolt expense from email message with subject={message.subject}"
-                )
+                    bar()
+                except IndexError:
+                    logger.error(
+                        f"Error fetching Bolt expense from email message with subject={message.subject}"
+                    )
 
         return expenses
 
     @classmethod
     def __get_distance_km(cls, message) -> int:
+        match = 0
         try:
             match = int(
                 re.search("distance .* km", message.subject).group().split(" ")[1]
@@ -108,6 +110,7 @@ class BoltParser(TransportationExpenseParser):
 
     @classmethod
     def __get_total_payed(cls, message) -> float:
+        match = 0
         try:
             match = float(
                 re.search("Total .*€", message.subject)
