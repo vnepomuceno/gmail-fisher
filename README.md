@@ -2,6 +2,10 @@
 
 ![Build Status](https://api.travis-ci.com/Vnepomuceno/gmail-fisher.svg?branch=master)
 
+[![Licence](https://img.shields.io/github/license/Ileriayo/markdown-badges)](./LICENSE)
+
+[<img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;">](https://www.buymeacoffee.com/valternep)
+
 Automation scripts for interacting with Gmail API 🎣
 
 ## Getting Started
