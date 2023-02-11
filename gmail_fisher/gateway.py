@@ -3,8 +3,9 @@ import concurrent
 import os
 from concurrent.futures.thread import ThreadPoolExecutor
 from pathlib import Path
-from typing import Iterable, Final, List
+from typing import Iterable, Final, List, Any, Dict
 
+import dateutil
 import google_auth_httplib2
 import httplib2
 from alive_progress import alive_bar
@@ -153,61 +154,74 @@ class GmailGateway:
             .execute(http=GmailClient.auth_http_request())
         )
 
-        attachment_list = list()
-        attachment = None
-        if get_message_result["payload"].keys().__contains__("parts"):
-            for part in get_message_result["payload"]["parts"]:
-                if part["mimeType"] in ["application/pdf", "application/octet-stream"]:
-                    attachment = MessageAttachment(
-                        part_id=part["partId"],
-                        filename=part["filename"],
-                        id=part["body"]["attachmentId"],
-                    )
-                elif part["mimeType"] in ["multipart/mixed"]:
-                    for subpart in part["parts"]:
-                        if subpart["mimeType"].__contains__("pdf"):
-                            attachment = MessageAttachment(
-                                part_id=subpart["partId"],
-                                filename=subpart["filename"],
-                                id=subpart["body"]["attachmentId"],
-                            )
-                if attachment:
-                    attachment_list.append(attachment)
+        attachment_list = GmailGateway.get_message_attachments(
+            get_message_result["payload"]
+        )
+        message_date = next(
+            item
+            for item in get_message_result["payload"]["headers"]
+            if item["name"] == "Date"
+        )["value"]
 
+        message_subject = get_message_result["snippet"]
         message = GmailMessage(
             id=message_id,
-            subject=get_message_result["snippet"],
-            date=next(
-                item
-                for item in get_message_result["payload"]["headers"]
-                if item["name"] == "Date"
-            )["value"],
+            subject=message_subject,
+            date=message_date,
             attachments=attachment_list,
         )
 
         if not fetch_body:
             return message
 
+        message.body = GmailGateway.get_message_body(get_message_result["payload"])
+
+        return message
+
+    @classmethod
+    def get_message_body(cls, message_payload: Dict[str, Any]) -> str:
         try:
-            if get_message_result["payload"]["body"]["size"] == 0:
-                message_parts = get_message_result["payload"].get("parts", None)
-                message.body = (
+            if message_payload["body"]["size"] == 0:
+                message_parts = message_payload.get("parts", None)
+                return (
                     base64.urlsafe_b64decode(message_parts[0]["body"]["data"])
                     .decode("utf-8")
                     .replace("\n", "")
                 )
             else:
-                message.body = (
-                    base64.urlsafe_b64decode(
-                        get_message_result["payload"]["body"]["data"]
-                    )
+                return (
+                    base64.urlsafe_b64decode(message_payload["body"]["data"])
                     .decode("utf-8")
                     .replace("\n", "")
                 )
         except Exception as e:
             logger.error(f"ERROR parsing body {e}")
 
-        return message
+    @classmethod
+    def get_message_attachments(cls, message_payload: Dict[str, Any]):
+        attachment_list = list()
+        attachment = None
+        if message_payload.keys().__contains__("parts"):
+            for part in message_payload["parts"]:
+                match part["mimeType"]:
+                    case "application/pdf" | "application/octet-stream":
+                        attachment = MessageAttachment(
+                            part_id=part["partId"],
+                            filename=part["filename"],
+                            id=part["body"]["attachmentId"],
+                        )
+                    case "multipart/mixed":
+                        for subpart in part["parts"]:
+                            if subpart["mimeType"].__contains__("pdf"):
+                                attachment = MessageAttachment(
+                                    part_id=subpart["partId"],
+                                    filename=subpart["filename"],
+                                    id=subpart["body"]["attachmentId"],
+                                )
+                if attachment:
+                    attachment_list.append(attachment)
+
+        return attachment_list
 
     @classmethod
     def get_message_attachment(cls, message_id: str, attachment_id: str) -> str:

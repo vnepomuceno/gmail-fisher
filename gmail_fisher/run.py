@@ -50,7 +50,9 @@ def export_bank_expenses_command(output_filepath: str):
 @click.command()
 @click.option("--output-filepath", help="File path of the output")
 def export_transport_expenses_command(output_filepath: str):
-    export_transport_expenses(TransportServiceType.BOLT, output_filepath)
+    export_transport_expenses(
+        TransportServiceType.BOLT, Path(output_filepath), upload_s3=True
+    )
 
 
 @click.command()

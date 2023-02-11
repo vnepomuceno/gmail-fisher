@@ -72,16 +72,21 @@ def export_bank_expenses(output_filepath: Path, upload_s3: bool = False):
         S3BucketUploader().upload(filepath=output_filepath, key=output_filepath.name)
 
 
-def export_transport_expenses(service_type: TransportServiceType, output_path: str):
+def export_transport_expenses(
+    service_type: TransportServiceType, output_path: Path, upload_s3: bool = False
+):
     logger.info(
         f"Exporting transportation expenses with {service_type=}, {output_path=}"
     )
     if service_type is TransportServiceType.BOLT:
         TransportationExpenseParser.serialize_expenses_to_json_file(
-            expenses=BoltParser.fetch_expenses(), output_path=output_path
+            expenses=BoltParser.fetch_expenses(), output_path=str(output_path)
         )
     else:
         raise RuntimeError(f"Invalid transport service type {service_type=}")
+
+    if upload_s3:
+        S3BucketUploader().upload(filepath=output_path, key=output_path.name)
 
 
 def export_email_attachments(sender_email: str, keywords: str):

@@ -14,6 +14,7 @@ from gmail_fisher.models import (
     BoltFoodExpense,
     FoodExpense,
 )
+from gmail_fisher.parsers import print_header
 from gmail_fisher.utils import get_logger
 
 logger = get_logger(__name__)
@@ -90,7 +91,9 @@ class BoltFoodParser(FoodExpenseParser):
     ) -> Iterable[BoltFoodExpense]:
         expenses = []
         num_messages = len(list(gmail_messages))
-        logger.info(f"⏳  Mapping {num_messages} email messages to Bolt Food expenses...")
+        logger.info(
+            f"⏳  Mapping {num_messages} email messages to Bolt Food expenses..."
+        )
         with alive_bar(num_messages) as bar:
             for message in gmail_messages:
                 try:
@@ -103,7 +106,9 @@ class BoltFoodParser(FoodExpenseParser):
                     expenses.append(expense)
                     bar()
                 except Exception as ex:
-                    logger.warning(f"Could not map food expense with subject={message.subject}, error={ex}")
+                    logger.warning(
+                        f"Could not map food expense with subject={message.subject}, error={ex}"
+                    )
 
         logger.success(f"Successfully mapped {len(expenses)} Bolt Food expenses")
         return expenses
@@ -226,11 +231,3 @@ class UberEatsParser(FoodExpenseParser):
     @staticmethod
     def get_date(message: GmailMessage):
         return message.get_date_as_datetime().date().__str__()
-
-def print_header(title):
-    box_size = 40
-    box_char = ':'
-
-    logger.info(box_char *40)
-    logger.info(f"{box_char * 2} {title.upper()}{' ' * (box_size - len(title) - 5)}{box_char * 2}")
-    logger.info(box_char * 40)

@@ -20,8 +20,7 @@ class S3BucketUploader:
             aws_access_key_id=access_key,
             aws_secret_access_key=os.environ.get("S3_SECRET_KEY"),
         )
-        logger.info(f"S3 client created for ACCESS_KEY='{access_key}'")
-        logger.info(f"S3 bucket name is '{self.bucket_name}'")
+        logger.info(f"Artifacts will be written to S3 bucket name '{self.bucket_name}'")
 
     def upload(self, filepath: Path, key: str):
         try:
@@ -41,7 +40,3 @@ class S3BucketUploader:
         logger.success(
             f"Successfully uploaded {filepath=} to bucket='{self.bucket_name}' with {key=}"
         )
-
-
-if __name__ == "__main__":
-    S3BucketUploader().upload(filepath="export_expenses.sh", key="export_expenses.sh")
