@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Iterable, Optional, Final, Dict
 
 import html2text as html2text
+from alive_progress import alive_bar
 
 from gmail_fisher.gateway import GmailGateway
 from gmail_fisher.models import (
@@ -74,7 +75,7 @@ class BoltFoodParser(FoodExpenseParser):
 
     @classmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
-        logger.info("Fetching Bolt Food expenses")
+        print_header("Bolt Food")
         messages = GmailGateway.get_email_messages(
             sender_emails=cls.sender_email,
             keywords=cls.keywords,
@@ -88,19 +89,23 @@ class BoltFoodParser(FoodExpenseParser):
         cls, gmail_messages: Iterable[GmailMessage]
     ) -> Iterable[BoltFoodExpense]:
         expenses = []
-        for message in gmail_messages:
-            try:
-                expense = BoltFoodExpense(
-                    id=message.id,
-                    restaurant=cls.get_restaurant(message),
-                    total=cls.get_total_payed(message=message),
-                    date=cls.get_date(message),
-                )
-                expenses.append(expense)
-                logger.info(f"Parsed bolt food expense {expense=}")
-            except Exception as ex:
-                logger.error(f"ERROR for subject={message.subject}")
+        num_messages = len(list(gmail_messages))
+        logger.info(f"⏳  Mapping {num_messages} email messages to Bolt Food expenses...")
+        with alive_bar(num_messages) as bar:
+            for message in gmail_messages:
+                try:
+                    expense = BoltFoodExpense(
+                        id=message.id,
+                        restaurant=cls.get_restaurant(message),
+                        total=cls.get_total_payed(message=message),
+                        date=cls.get_date(message),
+                    )
+                    expenses.append(expense)
+                    bar()
+                except Exception as ex:
+                    logger.warning(f"Could not map food expense with subject={message.subject}, error={ex}")
 
+        logger.success(f"Successfully mapped {len(expenses)} Bolt Food expenses")
         return expenses
 
     @classmethod
@@ -175,6 +180,7 @@ class UberEatsParser(FoodExpenseParser):
     @classmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
         logger.info("Fetching UberEats food expenses")
+        print_header("Uber Eats")
         messages = GmailGateway.get_email_messages(
             sender_emails=cls.sender_email,
             keywords=cls.keywords,
@@ -188,21 +194,23 @@ class UberEatsParser(FoodExpenseParser):
         cls, gmail_messages: Iterable[GmailMessage]
     ) -> Iterable[UberEatsExpense]:
         expenses = []
-        for message in gmail_messages:
-            try:
-                expense = UberEatsExpense(
-                    id=message.id,
-                    restaurant=cls.get_restaurant(message, cls.restaurant_filters),
-                    total=cls.get_total_payed(message),
-                    date=cls.get_date(message),
-                )
+        num_messages = len(list(gmail_messages))
+        with alive_bar(num_messages) as bar:
+            for message in gmail_messages:
+                try:
+                    expense = UberEatsExpense(
+                        id=message.id,
+                        restaurant=cls.get_restaurant(message, cls.restaurant_filters),
+                        total=cls.get_total_payed(message),
+                        date=cls.get_date(message),
+                    )
 
-                expenses.append(expense)
-                logger.info(f"Parsed uber eats food expense {expense=}")
-            except IndexError:
-                logger.error(
-                    f"Error fetching UberEats expense from email message with subject={message.subject}"
-                )
+                    expenses.append(expense)
+                    bar()
+                except IndexError:
+                    logger.warning(
+                        f"Could not map food expense with subject='{message.subject}'"
+                    )
 
         return expenses
 
@@ -218,3 +226,11 @@ class UberEatsParser(FoodExpenseParser):
     @staticmethod
     def get_date(message: GmailMessage):
         return message.get_date_as_datetime().date().__str__()
+
+def print_header(title):
+    box_size = 40
+    box_char = ':'
+
+    logger.info(box_char *40)
+    logger.info(f"{box_char * 2} {title.upper()}{' ' * (box_size - len(title) - 5)}{box_char * 2}")
+    logger.info(box_char * 40)

@@ -7,6 +7,7 @@ from typing import Iterable, Final, List
 
 import google_auth_httplib2
 import httplib2
+from alive_progress import alive_bar
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -113,22 +114,28 @@ class GmailGateway:
         message_ids = GmailGateway.list_message_ids(
             sender_emails, keywords, max_results
         )
-        with ThreadPoolExecutor(max_workers=THREAD_POOL_MAX_WORKERS) as pool:
-            logger.info(f"Submitting {len(set(message_ids))} tasks to thread pool")
-            futures = [
-                pool.submit(GmailGateway.get_message_detail, message_id, fetch_body)
-                for message_id in message_ids
-            ]
 
-            for future in concurrent.futures.as_completed(futures):
-                try:
-                    result = future.result()
-                    results.append(result)
-                except Exception as ex:
-                    logger.error(f"Error fetching future result {ex}")
+        with ThreadPoolExecutor(max_workers=THREAD_POOL_MAX_WORKERS) as pool:
+            num_messages = len(list(message_ids))
+            logger.info(
+                f"⏳  Fetching {num_messages} email messages from Gmail API with thread pool..."
+            )
+            with alive_bar(num_messages) as bar:
+                futures = [
+                    pool.submit(GmailGateway.get_message_detail, message_id, fetch_body)
+                    for message_id in message_ids
+                ]
+
+                for future in concurrent.futures.as_completed(futures):
+                    try:
+                        result = future.result()
+                        results.append(result)
+                        bar()
+                    except Exception as ex:
+                        logger.error(f"Error fetching future result {ex}")
 
         logger.success(
-            f"TOTAL SUCCESSFUL RESULTS {len(results)} for 'run_batch_get_message_detail'"
+            f"Successfully fetched {len(results)} emails from Gmail API from {sender_emails=} and {keywords=}"
         )
 
         return results
@@ -176,9 +183,6 @@ class GmailGateway:
                 if item["name"] == "Date"
             )["value"],
             attachments=attachment_list,
-        )
-        logger.success(
-            f"Fetched email details for {message_id=} subject={message.subject[:120]}..."
         )
 
         if not fetch_body:
