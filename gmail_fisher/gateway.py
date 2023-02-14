@@ -165,9 +165,12 @@ class GmailGateway:
             if item["name"] == "Date"
         )["value"]
 
+        from_header = [h for h in get_message_result['payload']['headers'] if h['name'] == "From"]
+        message_from = from_header[0]['value'] if len(from_header) == 1 else ""
         message_subject = get_message_result["snippet"]
         message = GmailMessage(
             id=message_id,
+            sender_email=message_from,
             subject=message_subject,
             date=message_date,
             attachments=attachment_list,

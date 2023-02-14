@@ -89,6 +89,7 @@ class BoltParser(TransportationExpenseParser):
                             to_address=to_address,
                             total=cls.__get_total_payed(message),
                             date=cls.__get_date(message),
+                            sender_email=message.sender_email
                         )
                     )
                     bar()

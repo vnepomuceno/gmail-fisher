@@ -98,11 +98,15 @@ class BoltFoodParser(FoodExpenseParser):
         with alive_bar(num_messages) as bar:
             for message in gmail_messages:
                 try:
+                    date = cls.get_date(message)
+                    if type(date) is not str:
+                        logger.info(message)
                     expense = BoltFoodExpense(
                         id=message.id,
                         restaurant=cls.get_restaurant(message),
                         total=cls.get_total_payed(message=message),
-                        date=cls.get_date(message),
+                        date=date,
+                        sender_email=message.sender_email
                     )
                     expenses.append(expense)
                     bar()
@@ -212,12 +216,18 @@ class UberEatsParser(FoodExpenseParser):
         with alive_bar(num_messages) as bar:
             for message in gmail_messages:
                 try:
+                    date = cls.get_date(message)
+                    if type(date) is not str:
+                        logger.info(message)
                     expense = UberEatsExpense(
                         id=message.id,
                         restaurant=cls.get_restaurant(message, cls.restaurant_filters),
                         total=cls.get_total_payed(message),
-                        date=cls.get_date(message),
+                        date=date,
+                        sender_email=message.sender_email
                     )
+                    # TODO Investigate why this is populated as a tuple and not a str
+                    expense.date = expense.date[0]
 
                     expenses.append(expense)
                     bar()

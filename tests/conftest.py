@@ -358,6 +358,7 @@ def uber_eats_messages() -> Iterable[GmailMessage]:
     return [
         GmailMessage(
             id="17570b788e2319d0",
+            sender_email="Sender Email",
             subject="Total €16.95 28 October 2020 Thanks for ordering, Valter Here&#39;s your receipt for Pizza "
             "Lizzy. Total €16.95 2 Pizza Média c/ 4 ingredientes à escolha!!! €14.55 Escolha até 4 "
             "ingredientes Azeite",
@@ -366,6 +367,7 @@ def uber_eats_messages() -> Iterable[GmailMessage]:
         ),
         GmailMessage(
             id="174a7fef0d8cdef3",
+            sender_email="Sender Email",
             subject="Total €10.90 19 September 2020 Thanks for ordering, Valter Here&#39;s your receipt for Poke "
             "House 🐠 (Saldanha). Total €10.90 1 Mixed Seas €8.50 Escolha o tamanho do bowl: Regular €0.00 "
             "Deseja Topping ",
@@ -380,6 +382,7 @@ def bolt_food_messages() -> Iterable[GmailMessage]:
     return [
         GmailMessage(
             id="179f7511b28528cd",
+            sender_email="Sender Email",
             subject="10-06-2021 Bon Appetit, Valter! This is your receipt. From Chickinho Rua Marquês de Fronteira "
             "117F, 1070-292 Lisboa To XXX, Lisbon 1 Breast Classic Sauce 6.90€ 2 Wedges with Herbs",
             body="""
@@ -419,6 +422,7 @@ def bolt_food_messages() -> Iterable[GmailMessage]:
         ),
         GmailMessage(
             id="17914b9e89b41e02",
+            sender_email="Sender Email",
             subject="27-04-2021 Bon Appetit, Valter! This is your receipt. From Sushicome - Saldanha Av. Miguel "
             "Bombarda, 23B - Lisboa 1050161 To XXX, Lisbon 1 BREADED SHRIMP CALIFORNIA (15 pieces) Soy",
             body="""
