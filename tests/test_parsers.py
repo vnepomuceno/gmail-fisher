@@ -10,12 +10,14 @@ def test_parse_bolt_expenses_from_messages(bolt_food_messages):
             restaurant="Chickinho",
             total=9.73,
             date="2021-06-10",
+            sender_email="Sender Email"
         ),
         BoltFoodExpense(
             id="17914b9e89b41e02",
             restaurant="Sushicome",
             total=15.8,
             date="2021-04-27",
+            sender_email="Sender Email"
         ),
     ]
 
@@ -28,12 +30,14 @@ def test_parse_uber_eats_expenses_from_messages(uber_eats_messages):
             restaurant="Pizza Lizzy",
             total=16.95,
             date="2020-10-28",
+            sender_email="Sender Email"
         ),
         UberEatsExpense(
             id="174a7fef0d8cdef3",
             restaurant="Poke House",
             total=10.9,
             date="2020-09-19",
+            sender_email="Sender Email"
         ),
     ]
 

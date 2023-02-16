@@ -31,10 +31,7 @@ class TransportationExpenseParser:
         file = open(output_path, "w")
         sorted_expenses = sorted(expenses, key=lambda exp: exp.date, reverse=True)
         json_expenses = json.dumps(
-            [
-                expense.__dict__
-                for expense in sorted_expenses
-            ],
+            [expense.__dict__ for expense in sorted_expenses],
             ensure_ascii=False,
             indent=4,
         )
@@ -42,6 +39,16 @@ class TransportationExpenseParser:
         file.close()
         logger.success(f"Successfully written results to {output_path=}")
         return json_expenses
+
+# TODO Add parser for Cooltra
+class CooltraParser(TransportationExpenseParser):
+    sender_email: Final[str] = "info@mailing.cooltra.com"
+    keywords: Final[str] = "Cooltra Invoice"
+
+# TODO Add parser for Uber
+class UberParser(TransportationExpenseParser):
+    sender_email: Final[str] = "noreply@uber.com"
+    keywords: Final[str] = "Uber Receipts ride"
 
 
 class BoltParser(TransportationExpenseParser):
@@ -65,6 +72,7 @@ class BoltParser(TransportationExpenseParser):
         cls, gmail_messages: Iterable[GmailMessage]
     ) -> Iterable[BoltTransportationExpense]:
         expenses = []
+        warnings = []
         num_messages = len(list(gmail_messages))
         logger.info(
             f"⏳  Mapping {num_messages} email messages to Bolt transportation expenses..."
@@ -81,13 +89,21 @@ class BoltParser(TransportationExpenseParser):
                             to_address=to_address,
                             total=cls.__get_total_payed(message),
                             date=cls.__get_date(message),
+                            sender_email=message.sender_email
                         )
                     )
                     bar()
                 except IndexError:
-                    logger.error(
-                        f"Error fetching Bolt expense from email message with subject={message.subject}"
+                    warnings.append(
+                        f"Could not map transport expense with subject={message.subject}, error={ex}"
                     )
+
+        if len(warnings) > 0:
+            logger.warning(
+                f"⚠️  Incomplete expense attributes for {len(warnings)} messages"
+            )
+            for warn in warnings:
+                logger.debug(warn)
 
         return expenses
 
@@ -106,7 +122,7 @@ class BoltParser(TransportationExpenseParser):
                 ]
                 return int(lines_with_distances[0].split("•")[1].split("km")[0])
         except Exception as e:
-            logger.warning(
+            logger.debug(
                 f"Could not match distance (km) from subject='{message.subject}'"
             )
 
@@ -142,7 +158,7 @@ class BoltParser(TransportationExpenseParser):
                 from_address = locations_array[0].strip("-  ").split("  ")[0]
                 to_address = locations_array[1].strip("Dropoff:  -- ").split("  ")[0]
         except Exception as e:
-            logger.warning(
+            logger.debug(
                 f"Could not match addresses with subject='{message.subject}', error={e}"
             )
 

@@ -90,6 +90,7 @@ class BoltFoodParser(FoodExpenseParser):
         cls, gmail_messages: Iterable[GmailMessage]
     ) -> Iterable[BoltFoodExpense]:
         expenses = []
+        warnings = []
         num_messages = len(list(gmail_messages))
         logger.info(
             f"⏳  Mapping {num_messages} email messages to Bolt Food expenses..."
@@ -97,18 +98,29 @@ class BoltFoodParser(FoodExpenseParser):
         with alive_bar(num_messages) as bar:
             for message in gmail_messages:
                 try:
+                    date = cls.get_date(message)
+                    if type(date) is not str:
+                        logger.info(message)
                     expense = BoltFoodExpense(
                         id=message.id,
                         restaurant=cls.get_restaurant(message),
                         total=cls.get_total_payed(message=message),
-                        date=cls.get_date(message),
+                        date=date,
+                        sender_email=message.sender_email
                     )
                     expenses.append(expense)
                     bar()
                 except Exception as ex:
-                    logger.warning(
+                    warnings.append(
                         f"Could not map food expense with subject={message.subject}, error={ex}"
                     )
+
+        if len(warnings) > 0:
+            logger.warning(
+                f"⚠️  Incomplete expense attributes for {len(warnings)} messages"
+            )
+            for warn in warnings:
+                logger.debug(warn)
 
         logger.success(f"Successfully mapped {len(expenses)} Bolt Food expenses")
         return expenses
@@ -199,23 +211,37 @@ class UberEatsParser(FoodExpenseParser):
         cls, gmail_messages: Iterable[GmailMessage]
     ) -> Iterable[UberEatsExpense]:
         expenses = []
+        warnings = []
         num_messages = len(list(gmail_messages))
         with alive_bar(num_messages) as bar:
             for message in gmail_messages:
                 try:
+                    date = cls.get_date(message)
+                    if type(date) is not str:
+                        logger.info(message)
                     expense = UberEatsExpense(
                         id=message.id,
                         restaurant=cls.get_restaurant(message, cls.restaurant_filters),
                         total=cls.get_total_payed(message),
-                        date=cls.get_date(message),
+                        date=date,
+                        sender_email=message.sender_email
                     )
+                    # TODO Investigate why this is populated as a tuple and not a str
+                    expense.date = expense.date[0]
 
                     expenses.append(expense)
                     bar()
                 except IndexError:
-                    logger.warning(
+                    warnings.append(
                         f"Could not map food expense with subject='{message.subject}'"
                     )
+
+        if len(warnings) > 0:
+            logger.warning(
+                f"⚠️  Incomplete expense attributes for {len(warnings)} messages"
+            )
+            for warn in warnings:
+                logger.debug(warn)
 
         return expenses
 

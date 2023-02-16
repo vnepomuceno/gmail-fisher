@@ -14,9 +14,11 @@ class MessageAttachment:
     id: str
 
 
+# TODO Add sender_email as attribute
 @dataclass
 class GmailMessage:
     id: str
+    sender_email: str
     subject: str
     date: datetime
     attachments: Optional[List[MessageAttachment]] = None
@@ -52,6 +54,7 @@ class FoodExpense:
     restaurant: str
     total_euros: float
     date: str
+    sender_email: str
 
 
 @dataclass
@@ -82,22 +85,24 @@ class BankExpense:
 
 @dataclass
 class UberEatsExpense(FoodExpense):
-    def __init__(self, id: str, restaurant: str, total: float, date: datetime):
+    def __init__(self, id: str, restaurant: str, total: float, date: str, sender_email: str):
         self.id = id
         self.service = FoodServiceType.UBER_EATS
         self.restaurant = restaurant
         self.total_euros = total
-        self.date = date
+        self.date = date,
+        self.sender_email = sender_email
 
 
 @dataclass
 class BoltFoodExpense(FoodExpense):
-    def __init__(self, id: str, restaurant: str, total: float, date: str):
+    def __init__(self, id: str, restaurant: str, total: float, date: str, sender_email: str):
         self.id = id
         self.service = FoodServiceType.BOLT_FOOD
         self.restaurant = restaurant
         self.total_euros = total
         self.date = date
+        self.sender_email = sender_email
 
 
 class TransportServiceType:
@@ -113,6 +118,7 @@ class TransportationExpense:
     to_address: str
     total_euros: float
     date: str
+    sender_email: str
 
 
 @dataclass
@@ -125,6 +131,7 @@ class BoltTransportationExpense(TransportationExpense):
         to_address: str,
         total: float,
         date: str,
+        sender_email: str
     ):
         self.id = id
         self.service = TransportServiceType.BOLT
@@ -133,3 +140,4 @@ class BoltTransportationExpense(TransportationExpense):
         self.to_address = to_address
         self.total_euros = total
         self.date = date
+        self.sender_email = sender_email

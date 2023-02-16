@@ -5,7 +5,6 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from pathlib import Path
 from typing import Iterable, Final, List, Any, Dict
 
-import dateutil
 import google_auth_httplib2
 import httplib2
 from alive_progress import alive_bar
@@ -110,6 +109,7 @@ class GmailGateway:
         keywords: str,
         max_results: int,
         fetch_body: bool = False,
+        log_details: bool = False,
     ) -> Iterable[GmailMessage]:
         results = []
         message_ids = GmailGateway.list_message_ids(
@@ -131,6 +131,8 @@ class GmailGateway:
                     try:
                         result = future.result()
                         results.append(result)
+                        if log_details:
+                            logger.info(f"Fetched message {result}")
                         bar()
                     except Exception as ex:
                         logger.error(f"Error fetching future result {ex}")
@@ -163,9 +165,12 @@ class GmailGateway:
             if item["name"] == "Date"
         )["value"]
 
+        from_header = [h for h in get_message_result['payload']['headers'] if h['name'] == "From"]
+        message_from = from_header[0]['value'] if len(from_header) == 1 else ""
         message_subject = get_message_result["snippet"]
         message = GmailMessage(
             id=message_id,
+            sender_email=message_from,
             subject=message_subject,
             date=message_date,
             attachments=attachment_list,

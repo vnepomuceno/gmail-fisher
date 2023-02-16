@@ -31,6 +31,7 @@ def list_email_messages(sender_email: str, keywords: str):
         sender_emails=sender_email,
         keywords=keywords,
         max_results=LIST_MESSAGES_MAX_RESULTS,
+        log_details=True,
     )
 
 
