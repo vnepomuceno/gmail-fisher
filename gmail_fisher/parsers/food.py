@@ -8,7 +8,7 @@ import html2text as html2text
 from alive_progress import alive_bar
 
 from gmail_fisher.gateway import GmailGateway
-from gmail_fisher.models import (
+from gmail_fisher.data.models import (
     GmailMessage,
     UberEatsExpense,
     BoltFoodExpense,

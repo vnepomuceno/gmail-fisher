@@ -5,7 +5,6 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from pathlib import Path
 from typing import Iterable, Final, List, Any, Dict
 
-import dateutil
 import google_auth_httplib2
 import httplib2
 from alive_progress import alive_bar
@@ -19,7 +18,7 @@ from gmail_fisher.config import (
     GMAIL_READ_ONLY_SCOPE,
     THREAD_POOL_MAX_WORKERS,
 )
-from gmail_fisher.models import GmailMessage, MessageAttachment
+from gmail_fisher.data.models import GmailMessage, MessageAttachment
 from gmail_fisher.utils import get_logger
 
 logger = get_logger(__name__)

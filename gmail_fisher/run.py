@@ -3,14 +3,12 @@ from pathlib import Path
 
 import click
 
-from gmail_fisher.models import FoodServiceType, TransportServiceType
-from gmail_fisher.services import (
-    export_email_attachments,
-    export_food_expenses,
-    export_transport_expenses,
-    list_email_messages,
-    export_bank_expenses,
-)
+from gmail_fisher.data.models import FoodServiceType, TransportServiceType
+from gmail_fisher.services.attachments import export_email_attachments
+from gmail_fisher.services.bank import export_bank_expenses
+from gmail_fisher.services.food import export_food_expenses
+from gmail_fisher.services.messages import list_email_messages
+from gmail_fisher.services.transport import export_transport_expenses
 from gmail_fisher.utils import get_logger
 
 logger = get_logger(__name__)

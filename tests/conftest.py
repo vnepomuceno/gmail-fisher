@@ -2,7 +2,7 @@ from typing import Iterable
 
 import pytest as pytest
 
-from gmail_fisher.models import GmailMessage
+from gmail_fisher.data.models import GmailMessage
 
 
 @pytest.fixture
