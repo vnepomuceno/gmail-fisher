@@ -2,7 +2,7 @@
 
 ![Build Status](https://api.travis-ci.com/Vnepomuceno/gmail-fisher.svg?branch=master)
 
-> Automation scripts for fetching email messages from Gmail API 🎣
+> 🎣 Automation scripts for fetching email messages from Gmail API.
 
 Gmail Fisher allows you to query email messages that you have in your Gmail inbox.
 
