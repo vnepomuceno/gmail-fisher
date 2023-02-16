@@ -1,9 +1,9 @@
 import logging
 
-from gmail_fisher.config import (
+from gmail_fisher.utils.config import (
     LIST_MESSAGES_MAX_RESULTS,
 )
-from gmail_fisher.gateway import GmailGateway
+from gmail_fisher.api.gateway import GmailGateway
 
 logger = logging.getLogger(__name__)
 

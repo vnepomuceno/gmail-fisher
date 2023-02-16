@@ -5,7 +5,7 @@ import boto3
 from botocore.exceptions import NoCredentialsError
 from dotenv import load_dotenv
 
-from gmail_fisher.utils import get_logger
+from gmail_fisher import get_logger
 
 load_dotenv()
 logger = get_logger(__name__)

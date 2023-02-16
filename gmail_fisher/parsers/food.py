@@ -7,7 +7,8 @@ from typing import Iterable, Optional, Final, Dict
 import html2text as html2text
 from alive_progress import alive_bar
 
-from gmail_fisher.gateway import GmailGateway
+from gmail_fisher import get_logger
+from gmail_fisher.api.gateway import GmailGateway
 from gmail_fisher.data.models import (
     GmailMessage,
     UberEatsExpense,
@@ -15,7 +16,6 @@ from gmail_fisher.data.models import (
     FoodExpense,
 )
 from gmail_fisher.parsers import print_header
-from gmail_fisher.utils import get_logger
 
 logger = get_logger(__name__)
 
