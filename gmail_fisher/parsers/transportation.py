@@ -13,6 +13,7 @@ from gmail_fisher.data.models import (
     TransportationExpense,
     BoltTransportationExpense,
     GmailMessage,
+    UberTransportationExpense,
 )
 from gmail_fisher.parsers import print_header
 
@@ -41,13 +42,116 @@ class TransportationExpenseParser:
         return json_expenses
 
 
+class UberParser(TransportationExpenseParser):
+    sender_email: Final[str] = "noreply@uber.com"
+    keywords: Final[str] = "Uber Receipts ride"
+
+    @classmethod
+    def fetch_expenses(cls) -> Iterable[UberTransportationExpense]:
+        print_header("🚕   Uber")
+        logger.info("Fetching Uber transportation expenses")
+        messages = GmailGateway.get_email_messages(
+            sender_emails=cls.sender_email,
+            keywords=cls.keywords,
+            max_results=1000,
+            fetch_body=True,
+        )
+        return cls.parse_expenses_from_messages(messages)
+
+    @classmethod
+    def parse_expenses_from_messages(
+        cls, gmail_messages: Iterable[GmailMessage]
+    ) -> Iterable[UberTransportationExpense]:
+        expenses = []
+        num_messages = len(list(gmail_messages))
+        logger.info(
+            f"⏳  Mapping {num_messages} email messages to Uber transportation expenses..."
+        )
+        with alive_bar(num_messages) as bar:
+            for message in gmail_messages:
+                try:
+                    from_address, to_address = cls.__get_addresses(message)
+                    current_expense = UberTransportationExpense(
+                        id=message.id,
+                        distance_km=cls.__get_distance_km(message),
+                        from_address=from_address,
+                        to_address=to_address,
+                        total=cls.__get_total_payed(message),
+                        date=cls.__get_date(message),
+                    )
+                    if not cls.__already_contains_uber_expense(
+                        expenses, current_expense
+                    ):
+                        expenses.append(current_expense)
+                    else:
+                        logger.warning(
+                            f"Detected duplicate expense={current_expense}, will ignore..."
+                        )
+                    bar()
+                except IndexError:
+                    logger.error(
+                        f"Error fetching Bolt expense from email message with subject={message.subject}"
+                    )
+
+        return expenses
+
+    @classmethod
+    def __get_addresses(cls, message):
+        return "", ""
+
+    @classmethod
+    def __get_distance_km(cls, message):
+        distance_duration_str = [
+            l
+            for l in html2text.html2text(message.body).split("\n")
+            if l.__contains__("kilometres")
+        ]
+        distance_str = [
+            s
+            for s in distance_duration_str[0].split("|")
+            if s.__contains__("kilometres")
+        ][0]
+        return float(distance_str.split(" kilometres")[0])
+
+    @classmethod
+    def __get_total_payed(cls, message) -> float:
+        try:
+            return float(message.subject.split("Total €")[1].split(" ")[0])
+        except Exception as e:
+            logger.warning(
+                f"Could not match total payed (€) with subject='{message.subject}', error={e}"
+            )
+
+    @classmethod
+    def __get_date(cls, message):
+        try:
+            subject_splits = message.subject.split(" Thanks for")[0].split(" ")
+            date = f"{subject_splits[-3]} {subject_splits[-2]} {subject_splits[-1]}"
+            return str(dateutil.parser.parse(date).date())
+        except Exception as e:
+            logger.warning(
+                f"Could not match date with subject='{message.subject}', error={e}"
+            )
+
+    @classmethod
+    def __already_contains_uber_expense(
+        cls,
+        expenses: Iterable[UberTransportationExpense],
+        expense: UberTransportationExpense,
+    ) -> bool:
+        for exp in expenses:
+            if expense.same_expense(exp):
+                return True
+        return False
+
+
 class BoltParser(TransportationExpenseParser):
     sender_email: Final[str] = "receipts-portugal@bolt.eu"
     keywords: Final[str] = "bolt trip"
 
     @classmethod
     def fetch_expenses(cls) -> Iterable[BoltTransportationExpense]:
-        print_header("Bolt")
+        print_header("🚕   Bolt")
         logger.info("Fetching Bolt transportation expenses")
         messages = GmailGateway.get_email_messages(
             sender_emails=cls.sender_email,

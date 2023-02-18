@@ -48,9 +48,7 @@ def export_bank_expenses_command(output_filepath: str):
 @click.command()
 @click.option("--output-filepath", help="File path of the output")
 def export_transport_expenses_command(output_filepath: str):
-    export_transport_expenses(
-        TransportServiceType.BOLT, Path(output_filepath), upload_s3=True
-    )
+    export_transport_expenses(Path(output_filepath), upload_s3=True)
 
 
 @click.command()
@@ -73,7 +71,7 @@ if __name__ == "__main__":
     elif script == "export_bank_expenses":
         export_bank_expenses(Path(sys.argv[2]))
     elif script == "export_transport_expenses":
-        export_transport_expenses(TransportServiceType.BOLT, sys.argv[2])
+        export_transport_expenses(output_path=sys.argv[2])
     elif script == "list_messages":
         list_email_messages(sys.argv[2], sys.argv[3])
     else:
