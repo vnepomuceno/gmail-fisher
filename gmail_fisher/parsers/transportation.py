@@ -7,14 +7,14 @@ import dateutil
 import html2text
 from alive_progress import alive_bar
 
-from gmail_fisher.gateway import GmailGateway
-from gmail_fisher.models import (
+from gmail_fisher import get_logger
+from gmail_fisher.api.gateway import GmailGateway
+from gmail_fisher.data.models import (
     TransportationExpense,
     BoltTransportationExpense,
     GmailMessage,
 )
 from gmail_fisher.parsers import print_header
-from gmail_fisher.utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -31,10 +31,7 @@ class TransportationExpenseParser:
         file = open(output_path, "w")
         sorted_expenses = sorted(expenses, key=lambda exp: exp.date, reverse=True)
         json_expenses = json.dumps(
-            [
-                expense.__dict__
-                for expense in sorted_expenses
-            ],
+            [expense.__dict__ for expense in sorted_expenses],
             ensure_ascii=False,
             indent=4,
         )

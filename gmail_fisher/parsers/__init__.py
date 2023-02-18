@@ -1,4 +1,4 @@
-from gmail_fisher.utils import logger
+from gmail_fisher.utils.file_utils import logger
 
 
 def print_header(title):

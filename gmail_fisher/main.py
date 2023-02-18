@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
-from gmail_fisher.services import get_food_expenses
+from gmail_fisher.services.food import get_food_expenses
+
 
 app = FastAPI()
 

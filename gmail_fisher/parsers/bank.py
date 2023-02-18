@@ -1,5 +1,4 @@
 import json
-import os
 import re
 import shutil
 from abc import ABC, abstractmethod
@@ -8,10 +7,11 @@ from typing import Iterable, Final
 
 import pdfplumber
 
-from gmail_fisher.config import TEMP_PATH
-from gmail_fisher.gateway import GmailGateway
-from gmail_fisher.models import BankExpense
-from gmail_fisher.utils import get_logger, FileUtils
+from gmail_fisher import get_logger
+from gmail_fisher.utils.config import TEMP_PATH
+from gmail_fisher.api.gateway import GmailGateway
+from gmail_fisher.data.models import BankExpense
+from gmail_fisher.utils.file_utils import FileUtils
 
 logger = get_logger(__name__)
 
