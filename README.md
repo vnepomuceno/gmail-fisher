@@ -4,7 +4,7 @@
 
 > 🎣 Automation scripts for fetching email messages from Gmail API.
 
-Gmail Fisher allows you to query email messages that you have in your Gmail inbox.
+Gmail Fisher allows you to query email messages in your Gmail inbox.
 
 ![Script demo](docs/script-running-demo.gif)
 
