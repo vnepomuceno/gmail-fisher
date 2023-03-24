@@ -102,16 +102,18 @@ class BoltFoodExpense(FoodExpense):
 
 class TransportServiceType:
     BOLT = "Bolt"
+    UBER = "Uber"
 
 
 @dataclass
 class TransportationExpense:
     id: str
     service: TransportServiceType
-    distance_km: int
+    distance_km: float
     from_address: str
     to_address: str
     total_euros: float
+    # TODO Find a way to also scrap the time the transportation happened
     date: str
 
 
@@ -120,7 +122,7 @@ class BoltTransportationExpense(TransportationExpense):
     def __init__(
         self,
         id: str,
-        distance_km: int,
+        distance_km: float,
         from_address: str,
         to_address: str,
         total: float,
@@ -133,3 +135,32 @@ class BoltTransportationExpense(TransportationExpense):
         self.to_address = to_address
         self.total_euros = total
         self.date = date
+
+
+@dataclass
+class UberTransportationExpense(TransportationExpense):
+    def __init__(
+        self,
+        id: str,
+        distance_km: float,
+        from_address: str,
+        to_address: str,
+        total: float,
+        date: str,
+    ):
+        self.id = id
+        self.service = TransportServiceType.UBER
+        self.distance_km = distance_km
+        self.from_address = from_address
+        self.to_address = to_address
+        self.total_euros = total
+        self.date = date
+
+    def same_expense(self, other_expense: "UberTransportationExpense") -> bool:
+        return (
+            self.distance_km == other_expense.distance_km
+            and self.from_address == other_expense.from_address
+            and self.to_address == other_expense.to_address
+            and self.total_euros == other_expense.total_euros
+            and self.date == other_expense.date
+        )

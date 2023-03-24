@@ -76,7 +76,7 @@ class BoltFoodParser(FoodExpenseParser):
 
     @classmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
-        print_header("Bolt Food")
+        print_header("🍕   Bolt Food")
         messages = GmailGateway.get_email_messages(
             sender_emails=cls.sender_email,
             keywords=cls.keywords,
@@ -185,7 +185,7 @@ class UberEatsParser(FoodExpenseParser):
     @classmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
         logger.info("Fetching UberEats food expenses")
-        print_header("Uber Eats")
+        print_header("🍕   Uber Eats")
         messages = GmailGateway.get_email_messages(
             sender_emails=cls.sender_email,
             keywords=cls.keywords,

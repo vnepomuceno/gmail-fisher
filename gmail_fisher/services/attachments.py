@@ -36,12 +36,12 @@ def __export_pdf_attachments(messages: Iterable[GmailMessage]):
                 message_id, message_subject = future_mappings[future]
                 FileUtils.save_base64_pdf(
                     base64_string=base64_content,
-                    file_path=OUTPUT_PATH
-                    / __get_payslip_filename(message_subject),
+                    file_path=OUTPUT_PATH / __get_payslip_filename(message_subject),
                     message_id=message_id,
                 )
             except Exception as ex:
                 logger.error(f"Error fetching future result {ex}")
+
 
 def __get_payslip_filename(cls, subject: str) -> str:
     match = re.search("[1-9]?[0-9][-][1-9][0-9][0-9][0-9]", subject).group(0)
