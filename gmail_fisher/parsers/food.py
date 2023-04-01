@@ -61,6 +61,8 @@ class FoodExpenseParser(ABC):
 class BoltFoodParser(FoodExpenseParser):
     sender_email: Final[str] = "portugal-food@bolt.eu"
     keywords: Final[str] = "Delivery from Bolt Food"
+    # TODO: Extract this list to an external file ignored by git and load it when script runs
+    # TODO: Make this filtering generic across parsers
     restaurant_filters: Final[Dict[str, str]] = {
         " - Saldanha Avenida Casal Ribeiro, 50 B , 1000-093 To Praça Aniceto do Rosário, Lisbon 1 Hamburguer X": "",
         " - Saldanha Av. Miguel Bombarda, 23B": "",
@@ -72,6 +74,10 @@ class BoltFoodParser(FoodExpenseParser):
         " Av. Da República, 97 B": "",
         ", 1070": "",
         " Praça do Chile 8 Lisboa 1000": "",
+        " Rua da Penha de França": "",
+        " Centro de Lazer do Campo Pequeno loja 412": "",
+        " Av. Duque de Ávila 46B": "",
+        " Rua do saco 50, 1150": "",
     }
 
     @classmethod
@@ -180,6 +186,7 @@ class UberEatsParser(FoodExpenseParser):
         " (Sta": "",
         " (Barata Salgueiro)": "",
         " (Rossio)": "",
+        " - by Street Chow": "",
     }
 
     @classmethod
