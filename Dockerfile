@@ -13,7 +13,7 @@ COPY ./poetry.lock ${VIRTUAL_ENV}/
 RUN python -m pip install --no-cache-dir --upgrade pip==22.3.1 \
         parse==1.19.0 \
         realpython-reader==1.1.1 \
-        poetry==1.3.2 \
+        poetry==1.4.2 \
     && poetry install
 
 COPY . ${VIRTUAL_ENV}/
