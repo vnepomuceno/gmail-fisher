@@ -1,0 +1,37 @@
+{
+  "trim": [
+    "\u00ae",
+    " 🐠",
+    " (Marquês de Pombal)",
+    "® (Saldanha)",
+    " (Saldanha)",
+    " (General Roçadas)",
+    " (Fontes Pereira de Melo)",
+    " (São Sebastião)",
+    " (Graça)",
+    " (Monumental)",
+    " (Saldanha Residence)",
+    " (República)",
+    " (Sta",
+    " (Barata Salgueiro)",
+    " (Rossio)",
+    " - by Street Chow",
+    " - Saldanha Avenida Casal Ribeiro, 50 B , 1000-093 To Praça Aniceto do Rosário, Lisbon 1 Hamburguer X",
+    " - Saldanha Av. Miguel Bombarda, 23B",
+    " Rua do saco 50, 1150-284 Lisboa To Praça Aniceto do Rosário, Lisbon 1 🎁 2x1",
+    " - Av. Roma Avenida de Roma 74 B",
+    " Rua Marquês de Fronteira 117F",
+    ", 1070-292 Lisboa To Praça Aniceto do Rosário, Lisbon 1 × 🎁 2x1",
+    " Av. Da República, 97 B",
+    ", 1070",
+    " Praça do Chile 8 Lisboa 1000",
+    " Rua da Penha de França",
+    " Centro de Lazer do Campo Pequeno loja 412",
+    " Av. Duque de Ávila 46B",
+    " Rua do saco 50, 1150"
+  ],
+  "replace": {
+    "&#39;": "'",
+    "&amp;": "&"
+  }
+}

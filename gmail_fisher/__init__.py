@@ -1,8 +1,12 @@
 import logging
+import os
 
 import coloredlogs
 
 from gmail_fisher.utils.config import LOG_LEVEL, LOG_FORMAT
+
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def get_logger(name: str) -> logging.Logger:
