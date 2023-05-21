@@ -1,5 +1,29 @@
-from gmail_fisher.data.models import BoltFoodExpense, UberEatsExpense, GmailMessage
-from gmail_fisher.parsers.food import BoltFoodParser, UberEatsParser
+import pytest
+
+from gmail_fisher.data.models import UberEatsExpense, BoltFoodExpense
+from gmail_fisher.parsers.food import FoodExpenseParser, BoltFoodParser, UberEatsParser
+
+
+@pytest.mark.parametrize(
+    "input_value, expected_output",
+    [
+        ("Sushi Place (General Roçadas)", "Sushi Place"),
+        ("Honorato - Saldanha Av. Miguel Bombarda, 23B", "Honorato"),
+        ("Pizza Lizzy", "Pizza Lizzy"),
+        (
+            "Sabores do Campo Centro de Lazer do Campo Pequeno loja 412",
+            "Sabores do Campo",
+        ),
+        ("Chimarrão Praça do Chile 8 Lisboa 1000", "Chimarrão"),
+        ("Chickinho Rua Marquês de Fronteira 117F", "Chickinho"),
+        ("Hello Beijing Av. Da República, 97 B", "Hello Beijing"),
+        ("Udon Av. Duque de Ávila 46B", "Udon"),
+    ],
+)
+def test_apply_restaurant_filters(input_value, expected_output):
+    result = FoodExpenseParser.apply_restaurant_filters(input_value)
+
+    assert result == expected_output
 
 
 def test_parse_bolt_expenses_from_messages(bolt_food_messages):
@@ -36,9 +60,3 @@ def test_parse_uber_eats_expenses_from_messages(uber_eats_messages):
             date="2020-09-19",
         ),
     ]
-
-
-def test_total_payed(bolt_email_html_body):
-    BoltFoodParser.get_total_payed(
-        message=GmailMessage(id="id", subject="", date="", body=bolt_email_html_body)
-    )

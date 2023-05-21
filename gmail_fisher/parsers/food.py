@@ -1,13 +1,14 @@
 import json
+import os
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Iterable, Optional, Final, Dict
+from typing import Iterable, Optional, Final
 
 import html2text as html2text
 from alive_progress import alive_bar
 
-from gmail_fisher import get_logger
+from gmail_fisher import get_logger, ROOT_DIR
 from gmail_fisher.api.gateway import GmailGateway
 from gmail_fisher.data.models import (
     GmailMessage,
@@ -16,8 +17,16 @@ from gmail_fisher.data.models import (
     FoodExpense,
 )
 from gmail_fisher.parsers import print_header
+from gmail_fisher.utils.json_utils import JsonUtils
 
 logger = get_logger(__name__)
+
+
+def apply_restaurant_filter(func):
+    def wrapper(*args, **kwargs):
+        return FoodExpenseParser.apply_restaurant_filters(func(*args, **kwargs))
+
+    return wrapper
 
 
 class FoodExpenseParser(ABC):
@@ -34,51 +43,37 @@ class FoodExpenseParser(ABC):
         output_path = Path(output_path)
         if not output_path.parent.exists():
             output_path.parent.mkdir(exist_ok=True)
-        file = open(output_path, "w")
+
         sorted_expenses = sorted(expenses, key=lambda exp: exp.date, reverse=True)
         json_expenses = json.dumps(
             [expense.__dict__ for expense in sorted_expenses],
             ensure_ascii=False,
             indent=4,
         )
-        file.write(json_expenses)
-        file.close()
-        logger.success(f"Successfully written results to {output_path=}")
+
+        JsonUtils.write_to_json_file(json_expenses, output_path)
         return json_expenses
 
     @classmethod
-    def find_and_replace_string_value(
-        cls, string_value: str, filters: dict[str, str]
-    ) -> str:
+    def apply_restaurant_filters(cls, string_value: str) -> str:
         """
         Apply filters by finding the filters dict key and replacing it by the dict value
         """
-        for exclude_str, replace_str in filters.items():
-            string_value = string_value.replace(exclude_str, replace_str)
+        filters = JsonUtils.load_dict_from_json(
+            os.path.join(ROOT_DIR, "parsers/restaurant-filters.json")
+        )
+
+        for filter_key, filter_value in filters["replace"].items():
+            string_value = string_value.replace(filter_key, filter_value)
+        for trim_str in filters["trim"]:
+            string_value = string_value.replace(trim_str, "")
+
         return string_value
 
 
 class BoltFoodParser(FoodExpenseParser):
     sender_email: Final[str] = "portugal-food@bolt.eu"
     keywords: Final[str] = "Delivery from Bolt Food"
-    # TODO: Extract this list to an external file ignored by git and load it when script runs
-    # TODO: Make this filtering generic across parsers
-    restaurant_filters: Final[Dict[str, str]] = {
-        " - Saldanha Avenida Casal Ribeiro, 50 B , 1000-093 To Praça Aniceto do Rosário, Lisbon 1 Hamburguer X": "",
-        " - Saldanha Av. Miguel Bombarda, 23B": "",
-        " Rua do saco 50, 1150-284 Lisboa To Praça Aniceto do Rosário, Lisbon 1 🎁 2x1": "",
-        " - Av. Roma Avenida de Roma 74 B": "",
-        "&#39;": "'",
-        " Rua Marquês de Fronteira 117F": "",
-        ", 1070-292 Lisboa To Praça Aniceto do Rosário, Lisbon 1 × 🎁 2x1": "",
-        " Av. Da República, 97 B": "",
-        ", 1070": "",
-        " Praça do Chile 8 Lisboa 1000": "",
-        " Rua da Penha de França": "",
-        " Centro de Lazer do Campo Pequeno loja 412": "",
-        " Av. Duque de Ávila 46B": "",
-        " Rua do saco 50, 1150": "",
-    }
 
     @classmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
@@ -120,6 +115,7 @@ class BoltFoodParser(FoodExpenseParser):
         return expenses
 
     @classmethod
+    @apply_restaurant_filter
     def get_restaurant(cls, message: GmailMessage) -> Optional[str]:
         if re.search(r"From .* -", message.subject) is not None:
             restaurant = re.search(r"From .* -", message.subject).group()[5:-2]
@@ -136,9 +132,7 @@ class BoltFoodParser(FoodExpenseParser):
         if restaurant.__contains__("-"):
             restaurant = restaurant.split("-")[0].strip()
 
-        return FoodExpenseParser.find_and_replace_string_value(
-            restaurant, cls.restaurant_filters
-        )
+        return restaurant
 
     @staticmethod
     def get_date(message: GmailMessage) -> str:
@@ -168,26 +162,6 @@ class BoltFoodParser(FoodExpenseParser):
 class UberEatsParser(FoodExpenseParser):
     sender_email: Final[str] = "uber.portugal@uber.com"
     keywords: Final[str] = "Total"
-    restaurant_filters: Final[Dict[str, str]] = {
-        "&#39;": "'",
-        "&amp;": "&",
-        "\u00ae": "",
-        " 🐠": "",
-        " (Marquês de Pombal)": "",
-        "® (Saldanha)": "",
-        " (Saldanha)": "",
-        " (General Roçadas)": "",
-        " (Fontes Pereira de Melo)": "",
-        " (São Sebastião)": "",
-        " (Graça)": "",
-        " (Monumental)": "",
-        " (Saldanha Residence)": "",
-        " (República)": "",
-        " (Sta": "",
-        " (Barata Salgueiro)": "",
-        " (Rossio)": "",
-        " - by Street Chow": "",
-    }
 
     @classmethod
     def fetch_expenses(cls) -> Iterable[FoodExpense]:
@@ -212,7 +186,7 @@ class UberEatsParser(FoodExpenseParser):
                 try:
                     expense = UberEatsExpense(
                         id=message.id,
-                        restaurant=cls.get_restaurant(message, cls.restaurant_filters),
+                        restaurant=cls.get_restaurant(message),
                         total=cls.get_total_payed(message),
                         date=cls.get_date(message),
                     )
@@ -227,9 +201,10 @@ class UberEatsParser(FoodExpenseParser):
         return expenses
 
     @staticmethod
-    def get_restaurant(message: GmailMessage, filters: dict[str, str]) -> Optional[str]:
+    @apply_restaurant_filter
+    def get_restaurant(message: GmailMessage) -> Optional[str]:
         restaurant = message.subject.split("receipt for ")[1].split(".")[0]
-        return FoodExpenseParser.find_and_replace_string_value(restaurant, filters)
+        return restaurant
 
     @staticmethod
     def get_total_payed(message: GmailMessage) -> float:
