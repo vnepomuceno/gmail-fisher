@@ -65,11 +65,23 @@ class GmailClient:
 
 
 class GmailGateway:
-    """Maximum number of workers for thread pool executor"""
+    @staticmethod
+    def _get_search_query(sender_emails, keywords, start_time, end_time):
+        if start_time is None or end_time is None:
+            return f"from:{sender_emails} {keywords}"
+        else:
+            return (
+                f"from:{sender_emails} {keywords} after:{start_time} before:{end_time}"
+            )
 
     @classmethod
     def list_message_ids(
-        cls, sender_emails: str, keywords: str, max_results: int
+        cls,
+        sender_emails: str,
+        keywords: str,
+        max_results: int,
+        start_time: str = None,
+        end_time: str = None,
     ) -> Iterable[str]:
         """
         For a given sender email and comma-separated keywords, retrieve the matching
@@ -82,7 +94,7 @@ class GmailGateway:
             .messages()
             .list(
                 userId="me",
-                q=f"from:{sender_emails} {keywords}",
+                q=cls._get_search_query(sender_emails, keywords, start_time, end_time),
                 maxResults=max_results,
             )
             .execute(http=GmailClient.auth_http_request())
@@ -109,10 +121,12 @@ class GmailGateway:
         keywords: str,
         max_results: int,
         fetch_body: bool = False,
+        start_time: str = None,
+        end_time: str = None,
     ) -> Iterable[GmailMessage]:
         results = []
-        message_ids = GmailGateway.list_message_ids(
-            sender_emails, keywords, max_results
+        message_ids = cls.list_message_ids(
+            sender_emails, keywords, max_results, start_time, end_time
         )
 
         with ThreadPoolExecutor(max_workers=THREAD_POOL_MAX_WORKERS) as pool:
@@ -122,7 +136,7 @@ class GmailGateway:
             )
             with alive_bar(num_messages) as bar:
                 futures = [
-                    pool.submit(GmailGateway.get_message_detail, message_id, fetch_body)
+                    pool.submit(cls.get_message_detail, message_id, fetch_body)
                     for message_id in message_ids
                 ]
 
@@ -153,7 +167,7 @@ class GmailGateway:
             .execute(http=GmailClient.auth_http_request())
         )
 
-        attachment_list = GmailGateway.get_message_attachments(
+        attachment_list = cls.get_message_attachments(
             get_message_result["payload"]
         )
         message_date = next(
@@ -173,7 +187,7 @@ class GmailGateway:
         if not fetch_body:
             return message
 
-        message.body = GmailGateway.get_message_body(get_message_result["payload"])
+        message.body = cls.get_message_body(get_message_result["payload"])
 
         return message
 

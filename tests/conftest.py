@@ -6,6 +6,24 @@ from gmail_fisher.data.models import GmailMessage
 
 
 @pytest.fixture
+def gmail_api_stub(mocker):
+    # Set up the desired response from the API
+    response = {
+        "messages": [
+            {"id": "message_id_1", "threadId": "thread_id_1"},
+            {"id": "message_id_2", "threadId": "thread_id_2"},
+        ]
+    }
+
+    # Stub the requests to the Gmail API
+    mocker.patch(
+        "googleapiclient.discovery.build"
+    ).return_value.users.return_value.messages.return_value.list.return_value.execute.return_value = (
+        response
+    )
+
+
+@pytest.fixture
 def bolt_email_html_body() -> str:
     return """<!DOCTYPE HTML>
 <html>

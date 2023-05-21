@@ -22,9 +22,17 @@ from gmail_fisher.utils.json_utils import JsonUtils
 logger = get_logger(__name__)
 
 
-def apply_restaurant_filter(func):
+def apply_restaurant_filter(method):
+    """
+    Decorator method that wraps the 'get_restaurant' method from the food parsers
+    and applies all restaurant filters to the output of that method.
+
+    :param method: Pass the function that is being wrapped
+    :return: Filtered restaurant name
+    """
+
     def wrapper(*args, **kwargs):
-        return FoodExpenseParser.apply_restaurant_filters(func(*args, **kwargs))
+        return FoodExpenseParser.apply_restaurant_filters(method(*args, **kwargs))
 
     return wrapper
 
@@ -76,13 +84,17 @@ class BoltFoodParser(FoodExpenseParser):
     keywords: Final[str] = "Delivery from Bolt Food"
 
     @classmethod
-    def fetch_expenses(cls) -> Iterable[FoodExpense]:
+    def fetch_expenses(
+        cls, start_time: str = None, end_time: str = None
+    ) -> Iterable[FoodExpense]:
         print_header("🍕   Bolt Food")
         messages = GmailGateway.get_email_messages(
             sender_emails=cls.sender_email,
             keywords=cls.keywords,
             max_results=1000,
             fetch_body=True,
+            start_time=start_time,
+            end_time=end_time
         )
         return cls.parse_expenses_from_messages(messages)
 
@@ -164,7 +176,9 @@ class UberEatsParser(FoodExpenseParser):
     keywords: Final[str] = "Total"
 
     @classmethod
-    def fetch_expenses(cls) -> Iterable[FoodExpense]:
+    def fetch_expenses(
+        cls, start_time: str = None, end_time: str = None
+    ) -> Iterable[FoodExpense]:
         logger.info("Fetching UberEats food expenses")
         print_header("🍕   Uber Eats")
         messages = GmailGateway.get_email_messages(
