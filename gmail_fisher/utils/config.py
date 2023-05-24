@@ -15,4 +15,5 @@ TEMP_PATH: Final[Path] = Path("temp/")
 AUTH_PATH: Final[Path] = Path("auth/")
 
 # CONCURRENCY
+# Maximum number of workers for thread pool executor
 THREAD_POOL_MAX_WORKERS: Final[int] = 200
