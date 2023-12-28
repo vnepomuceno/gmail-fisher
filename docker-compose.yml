@@ -1,10 +1,25 @@
 version: '3.7'
 services:
-    compile: &BASE
-        build: .
+    gmail-fisher:
+        image: python:3.11-slim
         volumes:
-            - .:/package
+            - ./gmail_fisher/cron_test.py:/venv/cron_test.py
+            - ./cronjob:/etc/cron.d/gmail-fisher-cron
+        working_dir: /venv
+        command: sh -c "cron && tail -f /var/log/cron.log"
 
-    tests:
-        <<: *BASE
-        command: bash -c "poetry run pytest -v tests"
+    cron:
+        image: python:3.11-slim
+        volumes:
+            - ./cronjob:/etc/cron.d/myscript-cron
+        working_dir: /app
+        command: cron && tail -f /var/log/cron.log
+
+#    compile: &BASE
+#        build: .
+#        volumes:
+#            - .:/package
+#
+#    tests:
+#        <<: *BASE
+#        command: bash -c "poetry run pytest -v tests"

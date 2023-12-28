@@ -1,0 +1,1 @@
+* * * * * root python /gmail_fisher/cron_test.py >> /var/log/gmail_fisher.log 2>&1
