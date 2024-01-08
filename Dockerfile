@@ -1,4 +1,4 @@
-FROM python:3.11.0-bullseye
+FROM python:3.12.1-bullseye
 
 # Set up and activate virtual environment
 ENV VIRTUAL_ENV "/venv"
