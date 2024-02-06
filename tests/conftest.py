@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Iterable
 
 import pytest as pytest
@@ -353,6 +354,10 @@ def bolt_email_html_body() -> str:
 """
 
 
+def str_to_datetime(date_str):
+    datetime.strptime(date_str, "%a, %d %b %Y %H:%M:%S %z (%Z)")
+
+
 @pytest.fixture
 def uber_eats_messages() -> Iterable[GmailMessage]:
     return [
@@ -362,7 +367,7 @@ def uber_eats_messages() -> Iterable[GmailMessage]:
             "Lizzy. Total €16.95 2 Pizza Média c/ 4 ingredientes à escolha!!! €14.55 Escolha até 4 "
             "ingredientes Azeite",
             body=None,
-            date="Wed, 28 Oct 2020 19:37:56 +0000 (UTC)",
+            date=str_to_datetime("Wed, 28 Oct 2020 19:37:56 +0000 (UTC)"),
         ),
         GmailMessage(
             id="174a7fef0d8cdef3",
@@ -370,7 +375,7 @@ def uber_eats_messages() -> Iterable[GmailMessage]:
             "House 🐠 (Saldanha). Total €10.90 1 Mixed Seas €8.50 Escolha o tamanho do bowl: Regular €0.00 "
             "Deseja Topping ",
             body=None,
-            date="Sat, 19 Sep 2020 20:12:14 +0000 (UTC)",
+            date=str_to_datetime("Sat, 19 Sep 2020 20:12:14 +0000 (UTC)"),
         ),
     ]
 
@@ -415,7 +420,7 @@ def bolt_food_messages() -> Iterable[GmailMessage]:
             
             If you require an invoice for Food, please request it from the Food Provider. © 2021 Bolt Operations OÜ
             """,
-            date="Thu, 10 Jun 2021 19:05:57 +0000 (UTC)",
+            date=str_to_datetime("Thu, 10 Jun 2021 19:05:57 +0000 (UTC)"),
         ),
         GmailMessage(
             id="17914b9e89b41e02",
@@ -452,6 +457,6 @@ def bolt_food_messages() -> Iterable[GmailMessage]:
             
             If you require an invoice for Food, please request it from the Food Provider. © 2021 Bolt Operations OÜ
             """,
-            date="Tue, 27 Apr 2021 19:06:37 +0000 (UTC)",
+            date=str_to_datetime("Tue, 27 Apr 2021 19:06:37 +0000 (UTC)"),
         ),
     ]
