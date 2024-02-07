@@ -1,21 +1,21 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Any
+
+from pydantic import BaseModel
 
 from gmail_fisher import get_logger
 
 logger = get_logger(__name__)
 
 
-@dataclass
-class MessageAttachment:
+class MessageAttachment(BaseModel):
     part_id: str
     filename: str
     id: str
 
 
-@dataclass
-class GmailMessage:
+class GmailMessage(BaseModel):
     id: str
     subject: str
     date: datetime
@@ -39,14 +39,13 @@ class GmailMessage:
             return datetime.datetime.now()
 
 
-class FoodServiceType:
-    UBER_EATS = "Uber Eats"
-    BOLT_FOOD = "Bolt Food"
-    ALL = "All"
+class FoodServiceType(BaseModel):
+    UBER_EATS: str = "Uber Eats"
+    BOLT_FOOD: str = "Bolt Food"
+    ALL: str = "All"
 
 
-@dataclass
-class FoodExpense:
+class FoodExpense(BaseModel):
     id: str
     service: FoodServiceType
     restaurant: str
@@ -54,9 +53,16 @@ class FoodExpense:
     date: str
 
 
-@dataclass
-class BankExpense:
-    def __init__(self, id: str, description: str, total_euros: str, date: str):
+class BankExpense(BaseModel):
+    id: str
+    description: str
+    total_euros: str
+    date: str
+
+    def __init__(
+        self, id: str, description: str, total_euros: str, date: str, /, **data: Any
+    ):
+        super().__init__(**data)
         self.id = id
         self.description = description
         self.total_euros = total_euros.replace("-", "")
@@ -82,7 +88,10 @@ class BankExpense:
 
 @dataclass
 class UberEatsExpense(FoodExpense):
-    def __init__(self, id: str, restaurant: str, total: float, date: datetime):
+    def __init__(
+        self, id: str, restaurant: str, total: float, date: datetime, /, **data: Any
+    ):
+        super().__init__(**data)
         self.id = id
         self.service = FoodServiceType.UBER_EATS
         self.restaurant = restaurant
@@ -92,7 +101,10 @@ class UberEatsExpense(FoodExpense):
 
 @dataclass
 class BoltFoodExpense(FoodExpense):
-    def __init__(self, id: str, restaurant: str, total: float, date: str):
+    def __init__(
+        self, id: str, restaurant: str, total: float, date: str, /, **data: Any
+    ):
+        super().__init__(**data)
         self.id = id
         self.service = FoodServiceType.BOLT_FOOD
         self.restaurant = restaurant
@@ -100,13 +112,12 @@ class BoltFoodExpense(FoodExpense):
         self.date = date
 
 
-class TransportServiceType:
-    BOLT = "Bolt"
-    UBER = "Uber"
+class TransportServiceType(BaseModel):
+    BOLT: str = "Bolt"
+    UBER: str = "Uber"
 
 
-@dataclass
-class TransportationExpense:
+class TransportationExpense(BaseModel):
     id: str
     service: TransportServiceType
     distance_km: float
