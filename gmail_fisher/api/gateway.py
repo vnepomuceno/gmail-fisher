@@ -1,9 +1,7 @@
 import base64
-import concurrent
-import os
-from concurrent.futures.thread import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Iterable, Final, List, Any, Dict
+from typing import Any, Final, Optional
 
 import google_auth_httplib2
 import httplib2
@@ -23,84 +21,84 @@ from gmail_fisher.data.models import GmailMessage, MessageAttachment
 
 logger = get_logger(__name__)
 
+_USER_ID = "me"
+
 
 class GmailClient:
-    scopes: List[str] = [GMAIL_READ_ONLY_SCOPE]
+    scopes: list[str] = [GMAIL_READ_ONLY_SCOPE]
     credentials_path: Final[Path] = AUTH_PATH / "credentials.json"
-    token_json_path: Final[Path] = AUTH_PATH / "auth_token.json"
-    __instance: Resource = None
+    token_path: Final[Path] = AUTH_PATH / "auth_token.json"
+    _instance: Resource = None
 
     @classmethod
     def auth_http_request(cls) -> google_auth_httplib2.AuthorizedHttp:
         return google_auth_httplib2.AuthorizedHttp(
-            cls.__authenticate(), http=httplib2.Http()
+            cls._authenticate(), http=httplib2.Http()
         )
 
     @classmethod
     def get_instance(cls) -> Resource:
-        if not cls.__instance:
-            credentials = cls.__authenticate()
-            cls.__instance = build("gmail", "v1", credentials=credentials)
-        return cls.__instance
+        if not cls._instance:
+            cls._instance = build("gmail", "v1", credentials=cls._authenticate())
+        return cls._instance
 
     @classmethod
-    def __authenticate(cls) -> Credentials:
-        credentials = None
-        if os.path.exists(cls.token_json_path):
-            with open(cls.token_json_path, "rb") as token:
-                credentials = Credentials.from_authorized_user_file(
-                    str(cls.token_json_path), cls.scopes
-                )
+    def _authenticate(cls) -> Credentials:
+        credentials = cls._load_cached_credentials()
         if not credentials or not credentials.valid:
-            if credentials and credentials.expired and credentials.refresh_token:
-                credentials.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    str(cls.credentials_path), cls.scopes
-                )
-                credentials = flow.run_local_server(port=0)
-            with open(cls.token_json_path, "w") as token:
-                token.write(credentials.to_json())
+            credentials = cls._refresh_or_reauthorize(credentials)
+            cls._save_credentials(credentials)
         return credentials
+
+    @classmethod
+    def _load_cached_credentials(cls) -> Optional[Credentials]:
+        if cls.token_path.exists():
+            return Credentials.from_authorized_user_file(str(cls.token_path), cls.scopes)
+        return None
+
+    @classmethod
+    def _refresh_or_reauthorize(cls, credentials: Optional[Credentials]) -> Credentials:
+        if credentials and credentials.expired and credentials.refresh_token:
+            credentials.refresh(Request())
+            return credentials
+        flow = InstalledAppFlow.from_client_secrets_file(
+            str(cls.credentials_path), cls.scopes
+        )
+        return flow.run_local_server(port=0)
+
+    @classmethod
+    def _save_credentials(cls, credentials: Credentials) -> None:
+        with open(cls.token_path, "w") as token:
+            token.write(credentials.to_json())
 
 
 class GmailGateway:
-    """Maximum number of workers for thread pool executor"""
-
     @classmethod
     def list_message_ids(
         cls, sender_emails: str, keywords: str, max_results: int
-    ) -> Iterable[str]:
-        """
-        For a given sender email and comma-separated keywords, retrieve the matching
-        message IDs and return them as a list.
-        """
+    ) -> list[str]:
         logger.info(f"Fetching emails with {sender_emails=}, {keywords=}")
-        list_message_results = (
+        result = (
             GmailClient.get_instance()
             .users()
             .messages()
             .list(
-                userId="me",
+                userId=_USER_ID,
                 q=f"from:{sender_emails} {keywords}",
                 maxResults=max_results,
             )
             .execute(http=GmailClient.auth_http_request())
         )
 
-        if list_message_results["resultSizeEstimate"] == 0:
+        if result["resultSizeEstimate"] == 0:
             logger.warning(
                 f"No messages found for email='{sender_emails}', keywords='{keywords}'"
             )
             return []
-        else:
-            message_ids = [
-                message["id"] for message in list_message_results["messages"]
-            ]
-            logger.info(
-                f"Found {len(message_ids)} emails for {sender_emails=}, {keywords=}"
-            )
-            return message_ids
+
+        message_ids = [message["id"] for message in result["messages"]]
+        logger.info(f"Found {len(message_ids)} emails for {sender_emails=}, {keywords=}")
+        return message_ids
 
     @classmethod
     def get_email_messages(
@@ -109,130 +107,116 @@ class GmailGateway:
         keywords: str,
         max_results: int,
         fetch_body: bool = False,
-    ) -> Iterable[GmailMessage]:
-        results = []
-        message_ids = GmailGateway.list_message_ids(
-            sender_emails, keywords, max_results
+    ) -> list[GmailMessage]:
+        message_ids = cls.list_message_ids(sender_emails, keywords, max_results)
+        num_messages = len(message_ids)
+        logger.info(
+            f"⏳  Fetching {num_messages} email messages from Gmail API with thread pool..."
         )
 
+        results = []
         with ThreadPoolExecutor(max_workers=THREAD_POOL_MAX_WORKERS) as pool:
-            num_messages = len(list(message_ids))
-            logger.info(
-                f"⏳  Fetching {num_messages} email messages from Gmail API with thread pool..."
-            )
+            futures = [
+                pool.submit(cls.get_message_detail, message_id, fetch_body)
+                for message_id in message_ids
+            ]
             with alive_bar(num_messages) as bar:
-                futures = [
-                    pool.submit(GmailGateway.get_message_detail, message_id, fetch_body)
-                    for message_id in message_ids
-                ]
-
-                for future in concurrent.futures.as_completed(futures):
+                for future in as_completed(futures):
                     try:
-                        result = future.result()
-                        results.append(result)
+                        results.append(future.result())
                         bar()
                     except Exception as ex:
-                        logger.error(f"Error fetching future result {ex}")
+                        logger.error(f"Error fetching future result: {ex}")
 
         logger.success(
             f"Successfully fetched {len(results)} emails from Gmail API from {sender_emails=} and {keywords=}"
         )
-
         return results
 
     @classmethod
     def get_message_detail(cls, message_id: str, fetch_body: bool) -> GmailMessage:
-        """
-        Fetches the detail of a message with a given message ID.
-        """
-        get_message_result = (
+        raw = (
             GmailClient.get_instance()
             .users()
             .messages()
-            .get(id=message_id, userId="me")
+            .get(id=message_id, userId=_USER_ID)
             .execute(http=GmailClient.auth_http_request())
         )
+        payload = raw["payload"]
 
-        attachment_list = GmailGateway.get_message_attachments(
-            get_message_result["payload"]
-        )
-        message_date = next(
-            item
-            for item in get_message_result["payload"]["headers"]
-            if item["name"] == "Date"
-        )["value"]
-
-        message_subject = get_message_result["snippet"]
         message = GmailMessage(
             id=message_id,
-            subject=message_subject,
-            date=message_date,
-            attachments=attachment_list,
+            subject=raw["snippet"],
+            date=cls._extract_date_header(payload),
+            attachments=cls.get_message_attachments(payload),
         )
 
-        if not fetch_body:
-            return message
-
-        message.body = GmailGateway.get_message_body(get_message_result["payload"])
+        if fetch_body:
+            message.body = cls.get_message_body(payload)
 
         return message
 
     @classmethod
-    def get_message_body(cls, message_payload: Dict[str, Any]) -> str:
-        try:
-            if message_payload["body"]["size"] == 0:
-                message_parts = message_payload.get("parts", None)
-                return (
-                    base64.urlsafe_b64decode(message_parts[0]["body"]["data"])
-                    .decode("utf-8")
-                    .replace("\n", "")
-                )
-            else:
-                return (
-                    base64.urlsafe_b64decode(message_payload["body"]["data"])
-                    .decode("utf-8")
-                    .replace("\n", "")
-                )
-        except Exception as e:
-            logger.error(f"ERROR parsing body {e}")
+    def _extract_date_header(cls, payload: dict[str, Any]) -> str:
+        return next(
+            header["value"]
+            for header in payload["headers"]
+            if header["name"] == "Date"
+        )
 
     @classmethod
-    def get_message_attachments(cls, message_payload: Dict[str, Any]):
-        attachment_list = list()
-        attachment = None
-        if message_payload.keys().__contains__("parts"):
-            for part in message_payload["parts"]:
-                match part["mimeType"]:
-                    case "application/pdf" | "application/octet-stream":
-                        attachment = MessageAttachment(
-                            part_id=part["partId"],
-                            filename=part["filename"],
-                            id=part["body"]["attachmentId"],
-                        )
-                    case "multipart/mixed":
-                        for subpart in part["parts"]:
-                            if subpart["mimeType"].__contains__("pdf"):
-                                attachment = MessageAttachment(
-                                    part_id=subpart["partId"],
-                                    filename=subpart["filename"],
-                                    id=subpart["body"]["attachmentId"],
-                                )
-                if attachment:
-                    attachment_list.append(attachment)
+    def get_message_body(cls, payload: dict[str, Any]) -> Optional[str]:
+        try:
+            data = (
+                payload["parts"][0]["body"]["data"]
+                if payload["body"]["size"] == 0
+                else payload["body"]["data"]
+            )
+            return base64.urlsafe_b64decode(data).decode("utf-8").replace("\n", "")
+        except Exception as e:
+            logger.error(f"Error parsing message body: {e}")
+            return None
 
-        return attachment_list
+    @classmethod
+    def get_message_attachments(cls, payload: dict[str, Any]) -> list[MessageAttachment]:
+        if "parts" not in payload:
+            return []
+
+        attachments = []
+        for part in payload["parts"]:
+            attachment = cls._extract_attachment_from_part(part)
+            if attachment:
+                attachments.append(attachment)
+        return attachments
+
+    @classmethod
+    def _extract_attachment_from_part(
+        cls, part: dict[str, Any]
+    ) -> Optional[MessageAttachment]:
+        mime_type = part["mimeType"]
+        if mime_type in ("application/pdf", "application/octet-stream"):
+            return MessageAttachment(
+                part_id=part["partId"],
+                filename=part["filename"],
+                id=part["body"]["attachmentId"],
+            )
+        if mime_type == "multipart/mixed":
+            for subpart in part["parts"]:
+                if "pdf" in subpart["mimeType"]:
+                    return MessageAttachment(
+                        part_id=subpart["partId"],
+                        filename=subpart["filename"],
+                        id=subpart["body"]["attachmentId"],
+                    )
+        return None
 
     @classmethod
     def get_message_attachment(cls, message_id: str, attachment_id: str) -> str:
-        """
-        Returns a base-64 string with the content for the .pdf attachment with 'message_id'
-        and 'attachment_id'.
-        """
         return (
             GmailClient.get_instance()
             .users()
             .messages()
             .attachments()
-            .get(userId="me", messageId=message_id, id=attachment_id)
+            .get(userId=_USER_ID, messageId=message_id, id=attachment_id)
             .execute(http=GmailClient.auth_http_request())["data"]
         )
