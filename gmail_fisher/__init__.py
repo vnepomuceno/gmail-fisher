@@ -1,30 +1,39 @@
 import logging
 import os
 
-import coloredlogs
+from rich.console import Console
+from rich.logging import RichHandler
 
-from gmail_fisher.utils.config import LOG_LEVEL, LOG_FORMAT
-
+from gmail_fisher.utils.config import LOG_LEVEL
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+console = Console()
+
+logging.SUCCESS = 25
+logging.addLevelName(logging.SUCCESS, "SUCCESS")
+
+logging.basicConfig(
+    level=LOG_LEVEL,
+    format="%(message)s",
+    handlers=[
+        RichHandler(
+            console=console,
+            show_path=True,
+            markup=True,
+            log_time_format="[%X]",
+            rich_tracebacks=True,
+        )
+    ],
+)
 
 
 def get_logger(name: str) -> logging.Logger:
-    coloredlogs.install()
     custom_logger = logging.getLogger(name)
-    logging.SUCCESS = 25  # between WARNING and INFO
-    logging.addLevelName(logging.SUCCESS, "SUCCESS")
     setattr(
         custom_logger,
         "success",
-        lambda message, *args: custom_logger._log(logging.SUCCESS, message, args),
+        lambda message, *args: console.print(f"  [bold green]✓[/bold green]  {message}"),
     )
-    coloredlogs.install(
-        level=LOG_LEVEL,
-        logger=custom_logger,
-        fmt=LOG_FORMAT,
-    )
-
     return custom_logger
 
 

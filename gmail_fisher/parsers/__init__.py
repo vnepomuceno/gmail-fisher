@@ -1,12 +1,7 @@
-from gmail_fisher.utils.file_utils import logger
+from gmail_fisher import console
 
 
-def print_header(title):
-    box_size = 40
-    box_char = ":"
-
-    logger.info(box_char * 40)
-    logger.info(
-        f"{box_char * 2} {title.upper()}{' ' * (box_size - len(title) - 5)}{box_char * 2}"
-    )
-    logger.info(box_char * 40)
+def print_header(title: str):
+    console.print()
+    console.rule(f"[bold cyan]{title}[/bold cyan]", style="cyan")
+    console.print()
