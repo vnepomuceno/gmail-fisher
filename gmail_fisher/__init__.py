@@ -18,7 +18,7 @@ logging.basicConfig(
     handlers=[
         RichHandler(
             console=console,
-            show_path=False,
+            show_path=True,
             markup=True,
             log_time_format="[%X]",
             rich_tracebacks=True,
